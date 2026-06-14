@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import react from '@vitejs/plugin-react';
 
 // Repo is published at https://olovyannikov.github.io/effector-lexical/
 export default defineConfig({
@@ -7,6 +8,11 @@ export default defineConfig({
   description: 'Effector bindings for the Lexical text editor',
   lastUpdated: true,
   cleanUrls: true,
+
+  vite: {
+    // React transform for the embedded live demo and the library's .tsx source.
+    plugins: [react({ include: [/\.tsx$/] })],
+  },
 
   themeConfig: {
     socialLinks: [

@@ -23,3 +23,11 @@ features:
   - title: Framework-agnostic core
     details: The core owns the editor and works headless. React bindings are a thin, optional layer.
 ---
+
+## Try it live
+
+The editor below is driven entirely through effector — the toolbar buttons are
+events, undo/redo state comes from `$canUndo`/`$canRedo`, and the counter reads
+the `$text` store.
+
+<LexicalDemo />
