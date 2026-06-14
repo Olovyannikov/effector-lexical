@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createStore, createEvent, sample, attach } from 'effector';
 import { useUnit } from 'effector-react';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -39,7 +40,7 @@ import {
 } from 'lexical';
 
 import { createEditorModel } from '../../../../src';
-import { EditorProvider } from '../../../../src/react';
+import { EditorProvider, useEditorInstance } from '../../../../src/react';
 
 const editor = createEditorModel({
   namespace: 'playground',
@@ -337,11 +338,27 @@ function Footer() {
   );
 }
 
+/**
+ * Reusable plugin: reflects the `$marks` store onto the editor's root element as
+ * a class, so CSS can reveal paragraph/line marks. Re-applies when the root
+ * element changes (e.g. remount).
+ */
+function FormattingMarksPlugin() {
+  const on = useUnit($marks);
+  const editor = useEditorInstance();
+  useEffect(() => {
+    const apply = (root: HTMLElement | null) =>
+      root?.classList.toggle('pg-marks', on);
+    apply(editor.getRootElement());
+    return editor.registerRootListener(apply);
+  }, [editor, on]);
+  return null;
+}
+
 export function PlaygroundDemo() {
-  const marks = useUnit($marks);
   return (
     <EditorProvider model={editor}>
-      <div className={marks ? 'pg-shell pg-marks' : 'pg-shell'}>
+      <div className="pg-shell">
         <Toolbar />
         <div className="pg-input-wrap">
           <RichTextPlugin
@@ -356,6 +373,7 @@ export function PlaygroundDemo() {
           <HistoryPlugin />
           <ListPlugin />
           <LinkPlugin />
+          <FormattingMarksPlugin />
         </div>
         <Footer />
       </div>

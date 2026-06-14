@@ -89,16 +89,25 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 
-/* Show formatting marks (¶ at block ends), toggled by an effector store. */
-.lexical-playground .pg-marks .pg-input p::after,
-.lexical-playground .pg-marks .pg-input h1::after,
-.lexical-playground .pg-marks .pg-input h2::after,
-.lexical-playground .pg-marks .pg-input blockquote::after,
-.lexical-playground .pg-marks .pg-input li::after {
+/* Show formatting marks: ¶ at block ends. The class lives on the root element
+   (the ContentEditable), toggled by the effector-driven FormattingMarksPlugin. */
+.lexical-playground .pg-input.pg-marks p::after,
+.lexical-playground .pg-input.pg-marks h1::after,
+.lexical-playground .pg-input.pg-marks h2::after,
+.lexical-playground .pg-input.pg-marks blockquote::after,
+.lexical-playground .pg-input.pg-marks li::after {
   content: '¶';
   color: var(--vp-c-brand-1);
-  opacity: 0.45;
+  opacity: 0.5;
   padding-left: 2px;
+}
+/* Empty blocks render a lone <br>; hide it so ¶ stays on the same line
+   instead of dropping to the next one. */
+.lexical-playground
+  .pg-input.pg-marks
+  :where(p, h1, h2, blockquote, li)
+  > br:only-child {
+  display: none;
 }
 .lexical-playground .pg-placeholder {
   position: absolute;
