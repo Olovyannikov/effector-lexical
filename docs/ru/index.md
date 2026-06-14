@@ -24,6 +24,24 @@ features:
     details: Ядро владеет редактором и работает в headless-режиме. React-биндинги — это тонкий, опциональный слой.
 ---
 
+## Установка
+
+::: code-group
+
+```bash [pnpm]
+pnpm add effector-lexical effector lexical
+```
+
+```bash [npm]
+npm install effector-lexical effector lexical
+```
+
+```bash [yarn]
+yarn add effector-lexical effector lexical
+```
+
+:::
+
 ## Попробуйте вживую
 
 Редактор ниже управляется целиком через effector — кнопки тулбара это события,
@@ -31,3 +49,6 @@ features:
 `$text`.
 
 <LexicalDemo />
+
+Хотите больше? В [**Playground**](./playground) есть заголовки, списки, ссылки и
+состояние тулбара, зависящее от выделения — всё на сторах effector.

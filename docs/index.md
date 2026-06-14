@@ -24,6 +24,24 @@ features:
     details: The core owns the editor and works headless. React bindings are a thin, optional layer.
 ---
 
+## Install
+
+::: code-group
+
+```bash [pnpm]
+pnpm add effector-lexical effector lexical
+```
+
+```bash [npm]
+npm install effector-lexical effector lexical
+```
+
+```bash [yarn]
+yarn add effector-lexical effector lexical
+```
+
+:::
+
 ## Try it live
 
 The editor below is driven entirely through effector — the toolbar buttons are
@@ -31,3 +49,6 @@ events, undo/redo state comes from `$canUndo`/`$canRedo`, and the counter reads
 the `$text` store.
 
 <LexicalDemo />
+
+Want more? The [**Playground**](./playground) has headings, lists, links and
+selection-aware toolbar state — all on effector stores.

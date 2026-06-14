@@ -32,6 +32,7 @@ export default defineConfig({
         nav: [
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'Recipes', link: '/recipes/' },
+          { text: 'Playground', link: '/playground' },
           { text: 'Examples', link: '/examples' },
           {
             text: 'npm',
@@ -67,7 +68,10 @@ export default defineConfig({
           },
           {
             text: 'Cookbook',
-            items: [{ text: 'Examples', link: '/examples' }],
+            items: [
+              { text: 'Playground', link: '/playground' },
+              { text: 'Examples', link: '/examples' },
+            ],
           },
         ],
       },
@@ -82,6 +86,7 @@ export default defineConfig({
         nav: [
           { text: 'Руководство', link: '/ru/guide/getting-started' },
           { text: 'Рецепты', link: '/ru/recipes/' },
+          { text: 'Playground', link: '/ru/playground' },
           { text: 'Примеры', link: '/ru/examples' },
           {
             text: 'npm',
@@ -120,7 +125,10 @@ export default defineConfig({
           },
           {
             text: 'Кулинарная книга',
-            items: [{ text: 'Примеры', link: '/ru/examples' }],
+            items: [
+              { text: 'Playground', link: '/ru/playground' },
+              { text: 'Примеры', link: '/ru/examples' },
+            ],
           },
         ],
         docFooter: { prev: 'Назад', next: 'Далее' },

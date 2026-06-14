@@ -1,0 +1,146 @@
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from 'vue';
+
+const host = ref<HTMLElement | null>(null);
+let root: { unmount: () => void } | null = null;
+
+onMounted(async () => {
+  const [{ createElement }, { createRoot }, { PlaygroundDemo }] =
+    await Promise.all([
+      import('react'),
+      import('react-dom/client'),
+      import('./demo/PlaygroundDemo'),
+    ]);
+  if (host.value) {
+    root = createRoot(host.value);
+    root.render(createElement(PlaygroundDemo));
+  }
+});
+
+onBeforeUnmount(() => {
+  root?.unmount();
+  root = null;
+});
+</script>
+
+<template>
+  <ClientOnly>
+    <div ref="host" class="lexical-playground" />
+  </ClientOnly>
+</template>
+
+<style>
+.lexical-playground .pg-shell {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lexical-playground .pg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+}
+.lexical-playground .pg-btn {
+  min-width: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+.lexical-playground .pg-btn:hover {
+  border-color: var(--vp-c-brand-1);
+}
+.lexical-playground .pg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.lexical-playground .pg-on {
+  background: var(--vp-c-brand-soft);
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+.lexical-playground .pg-sep {
+  width: 1px;
+  height: 1.4rem;
+  background: var(--vp-c-divider);
+  margin: 0 0.25rem;
+}
+.lexical-playground .pg-input-wrap {
+  position: relative;
+}
+.lexical-playground .pg-input {
+  min-height: 220px;
+  padding: 1rem 1.1rem;
+  outline: none;
+}
+.lexical-playground .pg-placeholder {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  color: var(--vp-c-text-3);
+  pointer-events: none;
+}
+.lexical-playground .pg-footer {
+  margin: 0;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.8rem;
+  color: var(--vp-c-text-2);
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* editor content theme */
+.lexical-playground .pg-h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0.4rem 0;
+}
+.lexical-playground .pg-h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0.4rem 0;
+}
+.lexical-playground .pg-quote {
+  margin: 0.4rem 0;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--vp-c-divider);
+  color: var(--vp-c-text-2);
+}
+.lexical-playground .pg-ul {
+  padding-left: 1.4rem;
+  list-style: disc;
+}
+.lexical-playground .pg-ol {
+  padding-left: 1.4rem;
+  list-style: decimal;
+}
+.lexical-playground .pg-li {
+  margin: 0.15rem 0;
+}
+.lexical-playground .pg-link {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
+}
+.lexical-playground .pg-bold {
+  font-weight: 700;
+}
+.lexical-playground .pg-italic {
+  font-style: italic;
+}
+.lexical-playground .pg-underline {
+  text-decoration: underline;
+}
+.lexical-playground .pg-code {
+  font-family: var(--vp-font-family-mono);
+  background: var(--vp-c-bg-soft);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+</style>
