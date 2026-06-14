@@ -1,0 +1,53 @@
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.toolbar button {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.editor-shell {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.editor-input {
+  min-height: 160px;
+  padding: 1rem;
+  outline: none;
+}
+
+.editor-placeholder {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: #999;
+  pointer-events: none;
+}
+
+.editor-bold {
+  font-weight: 700;
+}
+
+.editor-italic {
+  font-style: italic;
+}
+
+.footer {
+  color: #666;
+  font-size: 0.875rem;
+}
