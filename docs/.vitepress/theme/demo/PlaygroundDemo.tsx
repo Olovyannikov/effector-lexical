@@ -20,12 +20,20 @@ import {
   INSERT_ORDERED_LIST_COMMAND,
 } from '@lexical/list';
 import { LinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
+import {
+  CodeNode,
+  CodeHighlightNode,
+  $createCodeNode,
+  registerCodeHighlighting,
+} from '@lexical/code';
 import { $setBlocksType } from '@lexical/selection';
 import {
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
   FORMAT_TEXT_COMMAND,
+  FORMAT_ELEMENT_COMMAND,
+  type ElementFormatType,
   type ElementNode,
   type TextFormatType,
 } from 'lexical';
@@ -35,12 +43,21 @@ import { EditorProvider } from '../../../../src/react';
 
 const editor = createEditorModel({
   namespace: 'playground',
-  nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode],
+  nodes: [
+    HeadingNode,
+    QuoteNode,
+    ListNode,
+    ListItemNode,
+    LinkNode,
+    CodeNode,
+    CodeHighlightNode,
+  ],
   theme: {
     heading: { h1: 'pg-h1', h2: 'pg-h2' },
     quote: 'pg-quote',
     list: { ul: 'pg-ul', ol: 'pg-ol', listitem: 'pg-li' },
     link: 'pg-link',
+    code: 'pg-codeblock',
     text: {
       bold: 'pg-bold',
       italic: 'pg-italic',
@@ -52,6 +69,9 @@ const editor = createEditorModel({
     throw error;
   },
 });
+
+// Syntax highlighting for code blocks (registers node transforms once).
+registerCodeHighlighting(editor.editor);
 
 // ── Inline formats (commands → events) ──────────────────────────────────
 const format = editor.command<TextFormatType>(FORMAT_TEXT_COMMAND);
@@ -72,11 +92,18 @@ const toParagraph = setBlockFx.prepend(() => () => $createParagraphNode());
 const toH1 = setBlockFx.prepend(() => () => $createHeadingNode('h1'));
 const toH2 = setBlockFx.prepend(() => () => $createHeadingNode('h2'));
 const toQuote = setBlockFx.prepend(() => () => $createQuoteNode());
+const toCode = setBlockFx.prepend(() => () => $createCodeNode());
 
 // ── Lists & links (commands) ────────────────────────────────────────────
 const bulletList = editor.command<void>(INSERT_UNORDERED_LIST_COMMAND).dispatch;
 const numberList = editor.command<void>(INSERT_ORDERED_LIST_COMMAND).dispatch;
 const toggleLink = editor.command<string | null>(TOGGLE_LINK_COMMAND).dispatch;
+
+// ── Alignment ───────────────────────────────────────────────────────────
+const align = editor.command<ElementFormatType>(FORMAT_ELEMENT_COMMAND);
+const alignLeft = align.dispatch.prepend(() => 'left' as const);
+const alignCenter = align.dispatch.prepend(() => 'center' as const);
+const alignRight = align.dispatch.prepend(() => 'right' as const);
 
 // ── History ─────────────────────────────────────────────────────────────
 const { $canUndo, $canRedo, undo, redo } = editor.history();
@@ -137,9 +164,13 @@ function Toolbar() {
     onH1,
     onH2,
     onQuote,
+    onCode,
     onBullet,
     onNumber,
     onLink,
+    onAlignLeft,
+    onAlignCenter,
+    onAlignRight,
     onUndo,
     onRedo,
   ] = useUnit([
@@ -151,9 +182,13 @@ function Toolbar() {
     toH1,
     toH2,
     toQuote,
+    toCode,
     bulletList,
     numberList,
     toggleLink,
+    alignLeft,
+    alignCenter,
+    alignRight,
     undo,
     redo,
   ]);
@@ -186,6 +221,7 @@ function Toolbar() {
       {block('H1', 'h1', () => onH1())}
       {block('H2', 'h2', () => onH2())}
       {block('❝', 'quote', () => onQuote())}
+      {block('{ }', 'code', () => onCode())}
       <span className="pg-sep" />
       {fmt('B', active.bold, () => onBold())}
       {fmt('I', active.italic, () => onItalic())}
@@ -206,6 +242,16 @@ function Toolbar() {
         }}
       >
         🔗
+      </button>
+      <span className="pg-sep" />
+      <button className="pg-btn" onClick={() => onAlignLeft()}>
+        ⇤
+      </button>
+      <button className="pg-btn" onClick={() => onAlignCenter()}>
+        ⇔
+      </button>
+      <button className="pg-btn" onClick={() => onAlignRight()}>
+        ⇥
       </button>
     </div>
   );

@@ -143,4 +143,16 @@ onBeforeUnmount(() => {
   padding: 0.1rem 0.3rem;
   border-radius: 4px;
 }
+.lexical-playground .pg-codeblock {
+  display: block;
+  font-family: var(--vp-font-family-mono);
+  background: var(--vp-c-bg-alt);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  tab-size: 2;
+}
 </style>
