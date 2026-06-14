@@ -16,6 +16,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # changesets/action makes its own git commits; don't run our git hooks on them.
+    env:
+      LEFTHOOK: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
