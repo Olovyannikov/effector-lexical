@@ -76,6 +76,15 @@ JSON-строку (парсится через `editor.parseEditorState`).
 await editor.setStateFx(jsonStringFromServer);
 ```
 
+#### `setEditableFx`
+
+`Effect<boolean, void>`, оборачивающий `editor.setEditable()`. `$editable` обновляется через
+листенер editable.
+
+```ts
+await editor.setEditableFx(false); // read-only
+```
+
 #### `focusFx` / `blurFx`
 
 `Effect<void, void>`, оборачивающий `editor.focus()` / `editor.blur()`.
@@ -89,6 +98,37 @@ await editor.setStateFx(jsonStringFromServer);
 ```ts
 const text = editor.read(() => $getRoot().getTextContent());
 ```
+
+#### `attachToScope(scope)` / `detachScope()`
+
+Привязывает каждую эмиссию, управляемую листенерами, к форкнутому scope effector (через
+`scopeBind`), так что сторы модели и события `command`/`mutations` обновляют этот
+scope вместо глобального. Вызывайте один раз после `fork()`; `detachScope()`
+возвращает к глобальному scope. См. [Scope, SSR и тестирование](../recipes/scope).
+
+```ts
+import { fork } from 'effector';
+
+const scope = fork();
+editor.attachToScope(scope);
+// теперь scope.getState(editor.$text) отслеживает правки
+```
+
+#### `history()`
+
+Возвращает юниты истории, опирающиеся на команды истории Lexical. Требует активного
+плагина истории (`<HistoryPlugin />` или `registerHistory`).
+
+```ts
+const { $canUndo, $canRedo, undo, redo } = editor.history();
+```
+
+| Член       | Тип                   | Описание                        |
+| ---------- | --------------------- | ------------------------------- |
+| `$canUndo` | `Store<boolean>`      | Зеркалирует `CAN_UNDO_COMMAND`. |
+| `$canRedo` | `Store<boolean>`      | Зеркалирует `CAN_REDO_COMMAND`. |
+| `undo`     | `EventCallable<void>` | Диспатчит `UNDO_COMMAND`.       |
+| `redo`     | `EventCallable<void>` | Диспатчит `REDO_COMMAND`.       |
 
 #### `command(command, priority?)`
 

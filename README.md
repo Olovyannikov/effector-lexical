@@ -3,6 +3,9 @@
 > Effector bindings for the [Lexical](https://lexical.dev) text editor.
 
 [![npm](https://img.shields.io/npm/v/effector-lexical.svg)](https://www.npmjs.com/package/effector-lexical)
+[![CI](https://github.com/Olovyannikov/effector-lexical/actions/workflows/ci.yml/badge.svg)](https://github.com/Olovyannikov/effector-lexical/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Olovyannikov/effector-lexical/branch/main/graph/badge.svg)](https://codecov.io/gh/Olovyannikov/effector-lexical)
+[![minzip](https://img.shields.io/bundlephobia/minzip/effector-lexical)](https://bundlephobia.com/package/effector-lexical)
 [![license](https://img.shields.io/npm/l/effector-lexical.svg)](./LICENSE)
 
 Drive Lexical with stores, events and effects instead of imperative listener
