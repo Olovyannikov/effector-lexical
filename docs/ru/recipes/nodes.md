@@ -24,14 +24,21 @@ editor.mutations(LinkNode, { skipInitialization: true }).watch(/* … */);
 
 ## Подсчёт нод определённого типа
 
+Обойдите дерево через `$dfs` из `@lexical/utils` внутри закоммиченного
+`editorState` из payload события `updated`.
+
 ```ts
+import { $dfs } from '@lexical/utils';
 import { ImageNode } from './nodes/ImageNode';
 
 const $imageCount = createStore(0);
 
 sample({
   clock: editor.updated,
-  fn: () => editor.read(() => $nodesOfType(ImageNode).length),
+  fn: ({ editorState }) =>
+    editorState.read(
+      () => $dfs().filter(({ node }) => node instanceof ImageNode).length,
+    ),
   target: $imageCount,
 });
 ```
@@ -64,15 +71,19 @@ const insertText = (text: string) =>
 
 ## Переключение режима только для чтения
 
-`$editable` автоматически отражает режим (`registerEditableListener`);
-переключайте его через эффект.
+Используйте встроенный `setEditableFx`; `$editable` автоматически отражает режим
+(`registerEditableListener`).
 
 ```ts
-const setEditable = createEvent<boolean>();
-const setEditableFx = createEffect((editable: boolean) =>
-  editor.editor.setEditable(editable),
-);
-sample({ clock: setEditable, target: setEditableFx });
+const setReadOnly = createEvent<boolean>();
+
+sample({
+  clock: setReadOnly,
+  fn: (readOnly) => !readOnly,
+  target: editor.setEditableFx,
+});
+
+// editor.$editable остаётся в синхроне — биндите его в UI через useUnit.
 ```
 
 ## Счётчики символов / слов

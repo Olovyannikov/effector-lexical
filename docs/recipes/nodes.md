@@ -24,14 +24,21 @@ editor.mutations(LinkNode, { skipInitialization: true }).watch(/* … */);
 
 ## Count nodes of a type
 
+Walk the tree with `$dfs` from `@lexical/utils` inside the committed
+`editorState` from the `updated` payload.
+
 ```ts
+import { $dfs } from '@lexical/utils';
 import { ImageNode } from './nodes/ImageNode';
 
 const $imageCount = createStore(0);
 
 sample({
   clock: editor.updated,
-  fn: () => editor.read(() => $nodesOfType(ImageNode).length),
+  fn: ({ editorState }) =>
+    editorState.read(
+      () => $dfs().filter(({ node }) => node instanceof ImageNode).length,
+    ),
   target: $imageCount,
 });
 ```
@@ -64,15 +71,19 @@ const insertText = (text: string) =>
 
 ## Read-only toggle
 
-`$editable` mirrors the mode automatically (`registerEditableListener`); flip it
-through an effect.
+Use the built-in `setEditableFx`; `$editable` mirrors the mode automatically
+(`registerEditableListener`).
 
 ```ts
-const setEditable = createEvent<boolean>();
-const setEditableFx = createEffect((editable: boolean) =>
-  editor.editor.setEditable(editable),
-);
-sample({ clock: setEditable, target: setEditableFx });
+const setReadOnly = createEvent<boolean>();
+
+sample({
+  clock: setReadOnly,
+  fn: (readOnly) => !readOnly,
+  target: editor.setEditableFx,
+});
+
+// editor.$editable stays in sync — bind it in the UI with useUnit.
 ```
 
 ## Character / word counters

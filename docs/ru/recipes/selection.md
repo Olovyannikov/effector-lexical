@@ -1,8 +1,9 @@
 # Выделение и форматирование
 
 Lexical пересчитывает выделение на каждом обновлении, поэтому `updated` — это
-правильный clock для вывода UI-состояния, зависящего от выделения. Используйте
-`read` внутри `fn`, чтобы синхронно проинспектировать текущее выделение.
+правильный clock для вывода UI-состояния, зависящего от выделения. Payload
+события `updated` несёт новый `editorState`, поэтому читайте из него внутри `fn`
+— никакого скрытого `getState`, и `fn` остаётся чистой относительно входа.
 
 ## Состояние активного форматирования (bold/italic/…)
 
@@ -14,8 +15,8 @@ const $isBold = createStore(false);
 
 sample({
   clock: editor.updated,
-  fn: () =>
-    editor.read(() => {
+  fn: ({ editorState }) =>
+    editorState.read(() => {
       const selection = $getSelection();
       return $isRangeSelection(selection) ? selection.hasFormat('bold') : false;
     }),
@@ -32,8 +33,8 @@ const $formats = createStore<Record<string, boolean>>({});
 
 sample({
   clock: editor.updated,
-  fn: () =>
-    editor.read(() => {
+  fn: ({ editorState }) =>
+    editorState.read(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return {};
       return Object.fromEntries(
@@ -47,15 +48,14 @@ sample({
 ## Тип текущего блока (заголовок / параграф / список)
 
 ```ts
-import { $getNodeByKey } from 'lexical';
 import { $isHeadingNode } from '@lexical/rich-text';
 
 const $blockType = createStore<string>('paragraph');
 
 sample({
   clock: editor.updated,
-  fn: () =>
-    editor.read(() => {
+  fn: ({ editorState }) =>
+    editorState.read(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return 'paragraph';
       const anchorNode = selection.anchor.getNode();
@@ -78,8 +78,8 @@ const $linkUrl = createStore<string | null>(null);
 
 sample({
   clock: editor.updated,
-  fn: () =>
-    editor.read(() => {
+  fn: ({ editorState }) =>
+    editorState.read(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return null;
       const node = selection.anchor.getNode();
@@ -99,8 +99,8 @@ const $selectedText = createStore('');
 
 sample({
   clock: editor.updated,
-  fn: () =>
-    editor.read(() => {
+  fn: ({ editorState }) =>
+    editorState.read(() => {
       const selection = $getSelection();
       return selection ? selection.getTextContent() : '';
     }),
