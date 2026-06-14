@@ -1,16 +1,8 @@
 /// <reference types="vitest/config" />
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import dts from 'vite-plugin-dts';
 
 export default defineConfig({
-  plugins: [
-    dts({
-      include: ['src'],
-      exclude: ['**/*.test.ts', '**/*.test.tsx'],
-      rollupTypes: false,
-    }),
-  ],
   build: {
     target: 'es2021',
     sourcemap: true,
@@ -42,7 +34,7 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/**/*.test.{ts,tsx}', 'src/**/index.ts', 'src/**/types.ts'],
-      reporter: ['text', 'html'],
+      reporter: ['text', 'html', 'lcov'],
     },
   },
 });
