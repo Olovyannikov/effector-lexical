@@ -29,11 +29,13 @@ import {
 } from '@lexical/code';
 import { $setBlocksType } from '@lexical/selection';
 import {
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
+  TextNode,
   type ElementFormatType,
   type ElementNode,
   type TextFormatType,
@@ -158,6 +160,30 @@ const $words = editor.$text.map((t) =>
 // ── "Show formatting marks" toggle (pure effector state) ────────────────
 const toggleMarks = createEvent();
 const $marks = createStore(false).on(toggleMarks, (on) => !on);
+
+// Experimental: split whitespace runs into token-mode nodes (each rendered as
+// its own <span style="--ws:1">) so CSS can draw a · per space. Reverts on off.
+const WS = /\s/;
+editor.editor.registerNodeTransform(TextNode, (node) => {
+  const marked = node.getMode() === 'token' && node.getStyle().includes('--ws');
+  if (marked) {
+    if (!$marks.getState()) node.setMode('normal').setStyle('');
+    return;
+  }
+  if (!$marks.getState() || node.getMode() === 'token') return;
+
+  const text = node.getTextContent();
+  const start = text.search(WS);
+  if (start === -1) return;
+
+  // Isolate a single whitespace char as its own node (one · per space).
+  const fromStart = start > 0 ? node.splitText(start)[1]! : node;
+  const run =
+    fromStart.getTextContent().length > 1
+      ? fromStart.splitText(1)[0]!
+      : fromStart;
+  run.setMode('token').setStyle('--ws:1');
+});
 
 // Platform-aware shortcut hints for tooltips.
 const IS_APPLE =
@@ -351,6 +377,14 @@ function FormattingMarksPlugin() {
       root?.classList.toggle('pg-marks', on);
     apply(editor.getRootElement());
     return editor.registerRootListener(apply);
+  }, [editor, on]);
+  // Re-run the whitespace transform over existing content on toggle.
+  useEffect(() => {
+    editor.update(() => {
+      $getRoot()
+        .getAllTextNodes()
+        .forEach((n) => n.markDirty());
+    });
   }, [editor, on]);
   return null;
 }

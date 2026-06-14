@@ -109,6 +109,20 @@ onBeforeUnmount(() => {
   > br:only-child {
   display: none;
 }
+/* Experimental: a · for every space (whitespace split into token spans). */
+.lexical-playground .pg-input.pg-marks [style*='--ws'] {
+  position: relative;
+  color: transparent;
+}
+.lexical-playground .pg-input.pg-marks [style*='--ws']::before {
+  content: '·';
+  position: absolute;
+  inset: 0;
+  color: var(--vp-c-brand-1);
+  opacity: 0.55;
+  text-align: center;
+  pointer-events: none;
+}
 .lexical-playground .pg-placeholder {
   position: absolute;
   top: 1rem;
