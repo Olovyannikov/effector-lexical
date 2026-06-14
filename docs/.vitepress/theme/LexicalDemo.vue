@@ -66,6 +66,13 @@ onBeforeUnmount(() => {
   padding: 0.85rem 1rem;
   outline: none;
 }
+/* Reset VitePress .vp-doc paragraph margins leaking into the editor. */
+.lexical-demo .demo-input p {
+  margin: 0 0 0.35rem;
+}
+.lexical-demo .demo-input p:last-child {
+  margin-bottom: 0;
+}
 .lexical-demo .demo-placeholder {
   position: absolute;
   top: 0.85rem;

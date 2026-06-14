@@ -81,6 +81,25 @@ onBeforeUnmount(() => {
   padding: 1rem 1.1rem;
   outline: none;
 }
+/* Reset VitePress .vp-doc paragraph margins leaking into the editor. */
+.lexical-playground .pg-input :where(p, h1, h2, blockquote, ul, ol) {
+  margin: 0 0 0.35rem;
+}
+.lexical-playground .pg-input :where(p, h1, h2, blockquote, ul, ol):last-child {
+  margin-bottom: 0;
+}
+
+/* Show formatting marks (¶ at block ends), toggled by an effector store. */
+.lexical-playground .pg-marks .pg-input p::after,
+.lexical-playground .pg-marks .pg-input h1::after,
+.lexical-playground .pg-marks .pg-input h2::after,
+.lexical-playground .pg-marks .pg-input blockquote::after,
+.lexical-playground .pg-marks .pg-input li::after {
+  content: '¶';
+  color: var(--vp-c-brand-1);
+  opacity: 0.45;
+  padding-left: 2px;
+}
 .lexical-playground .pg-placeholder {
   position: absolute;
   top: 1rem;

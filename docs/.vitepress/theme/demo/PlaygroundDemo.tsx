@@ -1,4 +1,4 @@
-import { createStore, sample, attach } from 'effector';
+import { createStore, createEvent, sample, attach } from 'effector';
 import { useUnit } from 'effector-react';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -154,6 +154,17 @@ const $words = editor.$text.map((t) =>
   t.trim() ? t.trim().split(/\s+/).length : 0,
 );
 
+// ── "Show formatting marks" toggle (pure effector state) ────────────────
+const toggleMarks = createEvent();
+const $marks = createStore(false).on(toggleMarks, (on) => !on);
+
+// Platform-aware shortcut hints for tooltips.
+const IS_APPLE =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+const sc = (key: string) => (IS_APPLE ? `⌘${key}` : `Ctrl+${key}`);
+const REDO_HINT = IS_APPLE ? '⇧⌘Z' : 'Ctrl+Shift+Z';
+
 function Toolbar() {
   const [
     onBold,
@@ -173,6 +184,7 @@ function Toolbar() {
     onAlignRight,
     onUndo,
     onRedo,
+    onToggleMarks,
   ] = useUnit([
     bold,
     italic,
@@ -191,51 +203,89 @@ function Toolbar() {
     alignRight,
     undo,
     redo,
+    toggleMarks,
   ]);
-  const [active, canUndo, canRedo] = useUnit([$active, $canUndo, $canRedo]);
+  const [active, canUndo, canRedo, marks] = useUnit([
+    $active,
+    $canUndo,
+    $canRedo,
+    $marks,
+  ]);
 
-  const block = (label: string, value: string, onClick: () => void) => (
+  const block = (
+    label: string,
+    value: string,
+    title: string,
+    onClick: () => void,
+  ) => (
     <button
       className={active.block === value ? 'pg-btn pg-on' : 'pg-btn'}
+      title={title}
       onClick={onClick}
     >
       {label}
     </button>
   );
-  const fmt = (label: string, on: boolean, onClick: () => void) => (
-    <button className={on ? 'pg-btn pg-on' : 'pg-btn'} onClick={onClick}>
+  const fmt = (
+    label: string,
+    on: boolean,
+    title: string,
+    onClick: () => void,
+  ) => (
+    <button
+      className={on ? 'pg-btn pg-on' : 'pg-btn'}
+      title={title}
+      onClick={onClick}
+    >
       {label}
     </button>
   );
 
   return (
     <div className="pg-toolbar">
-      <button className="pg-btn" disabled={!canUndo} onClick={() => onUndo()}>
+      <button
+        className="pg-btn"
+        title={`Undo (${sc('Z')})`}
+        disabled={!canUndo}
+        onClick={() => onUndo()}
+      >
         ↶
       </button>
-      <button className="pg-btn" disabled={!canRedo} onClick={() => onRedo()}>
+      <button
+        className="pg-btn"
+        title={`Redo (${REDO_HINT})`}
+        disabled={!canRedo}
+        onClick={() => onRedo()}
+      >
         ↷
       </button>
       <span className="pg-sep" />
-      {block('P', 'paragraph', () => onParagraph())}
-      {block('H1', 'h1', () => onH1())}
-      {block('H2', 'h2', () => onH2())}
-      {block('❝', 'quote', () => onQuote())}
-      {block('{ }', 'code', () => onCode())}
+      {block('P', 'paragraph', 'Paragraph', () => onParagraph())}
+      {block('H1', 'h1', 'Heading 1', () => onH1())}
+      {block('H2', 'h2', 'Heading 2', () => onH2())}
+      {block('❝', 'quote', 'Quote', () => onQuote())}
+      {block('{ }', 'code', 'Code block', () => onCode())}
       <span className="pg-sep" />
-      {fmt('B', active.bold, () => onBold())}
-      {fmt('I', active.italic, () => onItalic())}
-      {fmt('U', active.underline, () => onUnderline())}
-      {fmt('<>', active.code, () => onInlineCode())}
+      {fmt('B', active.bold, `Bold (${sc('B')})`, () => onBold())}
+      {fmt('I', active.italic, `Italic (${sc('I')})`, () => onItalic())}
+      {fmt('U', active.underline, `Underline (${sc('U')})`, () =>
+        onUnderline(),
+      )}
+      {fmt('<>', active.code, 'Inline code', () => onInlineCode())}
       <span className="pg-sep" />
-      <button className="pg-btn" onClick={() => onBullet()}>
+      <button className="pg-btn" title="Bullet list" onClick={() => onBullet()}>
         • List
       </button>
-      <button className="pg-btn" onClick={() => onNumber()}>
+      <button
+        className="pg-btn"
+        title="Numbered list"
+        onClick={() => onNumber()}
+      >
         1. List
       </button>
       <button
         className="pg-btn"
+        title="Insert link"
         onClick={() => {
           const url = window.prompt('Link URL');
           onLink(url ? url : null);
@@ -244,14 +294,34 @@ function Toolbar() {
         🔗
       </button>
       <span className="pg-sep" />
-      <button className="pg-btn" onClick={() => onAlignLeft()}>
+      <button
+        className="pg-btn"
+        title="Align left"
+        onClick={() => onAlignLeft()}
+      >
         ⇤
       </button>
-      <button className="pg-btn" onClick={() => onAlignCenter()}>
+      <button
+        className="pg-btn"
+        title="Align center"
+        onClick={() => onAlignCenter()}
+      >
         ⇔
       </button>
-      <button className="pg-btn" onClick={() => onAlignRight()}>
+      <button
+        className="pg-btn"
+        title="Align right"
+        onClick={() => onAlignRight()}
+      >
         ⇥
+      </button>
+      <span className="pg-sep" />
+      <button
+        className={marks ? 'pg-btn pg-on' : 'pg-btn'}
+        title="Show formatting marks"
+        onClick={() => onToggleMarks()}
+      >
+        ¶
       </button>
     </div>
   );
@@ -268,9 +338,10 @@ function Footer() {
 }
 
 export function PlaygroundDemo() {
+  const marks = useUnit($marks);
   return (
     <EditorProvider model={editor}>
-      <div className="pg-shell">
+      <div className={marks ? 'pg-shell pg-marks' : 'pg-shell'}>
         <Toolbar />
         <div className="pg-input-wrap">
           <RichTextPlugin

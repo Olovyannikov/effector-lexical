@@ -22,6 +22,13 @@ const italic = format.dispatch.prepend(() => 'italic' as const);
 const { $canUndo, $canRedo, undo, redo } = editor.history();
 const $chars = editor.$text.map((t) => t.length);
 
+// Platform-aware shortcut hints for tooltips.
+const IS_APPLE =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+const sc = (key: string) => (IS_APPLE ? `⌘${key}` : `Ctrl+${key}`);
+const REDO_HINT = IS_APPLE ? '⇧⌘Z' : 'Ctrl+Shift+Z';
+
 function Toolbar() {
   const [onBold, onItalic, onUndo, onRedo, canUndo, canRedo] = useUnit([
     bold,
@@ -33,17 +40,25 @@ function Toolbar() {
   ]);
   return (
     <div className="demo-toolbar">
-      <button onClick={() => onBold()}>
+      <button title={`Bold (${sc('B')})`} onClick={() => onBold()}>
         <b>B</b>
       </button>
-      <button onClick={() => onItalic()}>
+      <button title={`Italic (${sc('I')})`} onClick={() => onItalic()}>
         <i>I</i>
       </button>
       <span className="demo-sep" />
-      <button onClick={() => onUndo()} disabled={!canUndo}>
+      <button
+        title={`Undo (${sc('Z')})`}
+        onClick={() => onUndo()}
+        disabled={!canUndo}
+      >
         ↶ Undo
       </button>
-      <button onClick={() => onRedo()} disabled={!canRedo}>
+      <button
+        title={`Redo (${REDO_HINT})`}
+        onClick={() => onRedo()}
+        disabled={!canRedo}
+      >
         ↷ Redo
       </button>
     </div>
