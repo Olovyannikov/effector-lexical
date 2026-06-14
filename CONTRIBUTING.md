@@ -44,3 +44,15 @@ docs: document the autosave recipe
 1. Keep the core framework-agnostic — React-specific code lives in `src/react`.
 2. Add or update tests; coverage should stay at 100% for `src`.
 3. Update `SPEC.md` and the docs when behaviour changes.
+4. Add a changeset for user-facing changes: `pnpm changeset`.
+
+## Releases
+
+Versioning is handled by [changesets](https://github.com/changesets/changesets).
+
+1. Run `pnpm changeset` and describe the change (pick the bump level).
+2. On merge to `main`, the Release workflow opens a "Version Packages" PR.
+3. Merging that PR publishes to npm (with provenance).
+
+`pnpm check:exports` (publint + are-the-types-wrong) validates the published
+package shape and runs in CI.
