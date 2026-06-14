@@ -82,6 +82,11 @@ theme, onError, editable, editorState, …), forwarded verbatim.
   object is treated as a serialized state and parsed.
 - **`destroy()` is total.** It removes the update/text/editable/root listeners
   plus every listener created by `command()` and `mutations()`.
+- **Listener emissions are scope-less.** Events fed by Lexical listeners are
+  called from Lexical callbacks, i.e. **outside any effector scope**, so they
+  update the global store states rather than a forked scope's copies. Use the
+  model at the global scope; for `fork`-based reactivity see the roadmap note in
+  _Non-goals_. Full explanation: docs → Recipes → _Scope, SSR & testing_.
 
 ## 4. React adapter
 
@@ -101,7 +106,9 @@ their preferred method.
 
 - No bundled UI / toolbar components.
 - No `effector` scope/`fork` serialization of the editor instance (it is not
-  serializable; SSR is supported only for headless state parsing).
+  serializable; SSR is supported only for headless state parsing). Listener-fed
+  stores update the global scope only (see §3.3). A scoped variant —
+  `attachToScope(scope)` re-binding emitters via `scopeBind` — is on the roadmap.
 - Solid/Vue adapters — planned, not in v0.
 
 ## 6. Versioning & tooling
