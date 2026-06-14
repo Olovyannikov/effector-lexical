@@ -6,7 +6,7 @@ import type {
   NodeKey,
   NodeMutation,
 } from 'lexical';
-import type { Event, EventCallable } from 'effector';
+import type { Event, EventCallable, Store } from 'effector';
 
 /** Configuration passed straight to Lexical's `createEditor`. */
 export type CreateEditorModelConfig = CreateEditorArgs;
@@ -46,6 +46,18 @@ export interface CommandModel<Payload> {
   dispatch: EventCallable<Payload>;
   /** Fires whenever the command is dispatched (observation only). */
   triggered: Event<Payload>;
+}
+
+/** History units returned by `model.history()`. */
+export interface HistoryModel {
+  /** Whether an undo is currently available. */
+  $canUndo: Store<boolean>;
+  /** Whether a redo is currently available. */
+  $canRedo: Store<boolean>;
+  /** Dispatches `UNDO_COMMAND`. */
+  undo: EventCallable<void>;
+  /** Dispatches `REDO_COMMAND`. */
+  redo: EventCallable<void>;
 }
 
 export type { LexicalEditor, EditorState };

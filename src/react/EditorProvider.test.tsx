@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { StrictMode } from 'react';
 import { render, waitFor, act } from '@testing-library/react';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
@@ -98,5 +99,51 @@ describe('EditorProvider', () => {
       return null;
     }
     expect(() => render(<Orphan />)).toThrow(/EditorProvider/);
+  });
+
+  it('forwards the editor theme into the composer context', () => {
+    const theme = { paragraph: 'my-paragraph' };
+    const model = createEditorModel({ namespace: 'react', theme, onError });
+    let contextTheme: unknown;
+
+    function Probe() {
+      const [, context] = useLexicalComposerContext();
+      contextTheme = context.getTheme();
+      return null;
+    }
+
+    render(
+      <EditorProvider model={model}>
+        <Probe />
+      </EditorProvider>,
+    );
+
+    expect(contextTheme).toEqual(theme);
+    model.destroy();
+  });
+
+  it('works under React StrictMode (double mount)', async () => {
+    const model = createEditorModel({ namespace: 'react', onError });
+
+    const { getByTestId } = render(
+      <StrictMode>
+        <EditorProvider model={model}>
+          <Editor />
+        </EditorProvider>
+      </StrictMode>,
+    );
+
+    await act(async () => {
+      await model.updateFx(() => {
+        const root = $getRoot();
+        root.clear();
+        root.append($createParagraphNode().append($createTextNode('strict')));
+      });
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('content').textContent).toBe('strict');
+    });
+    model.destroy();
   });
 });

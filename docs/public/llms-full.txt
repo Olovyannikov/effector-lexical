@@ -27,9 +27,12 @@ The model OWNS the editor (calls `createEditor`) and OWNS every listener's lifec
 - Effects:
   - `updateFx: Effect<UpdateParams, void>` — wraps `editor.update`; resolves AFTER reconciliation (onUpdate). `UpdateParams = (() => void) | { run: () => void; options?: EditorUpdateOptions }`. Throwing writer rejects the effect.
   - `setStateFx: Effect<EditorState | SerializedEditorState | string, void>` — string/serialized parsed via `parseEditorState`; live EditorState (has `.read`) used directly; then `setEditorState`.
+  - `setEditableFx: Effect<boolean, void>` — `editor.setEditable`.
   - `focusFx: Effect<void, void>`, `blurFx: Effect<void, void>`.
 - Helpers:
   - `read<T>(reader: () => T): T` — synchronous `editorState.read`.
+  - `attachToScope(scope): void` / `detachScope(): void` — route all listener-driven emissions into a forked effector scope via scopeBind (fixes scope-loss); default is global scope.
+  - `history(): { $canUndo: Store<boolean>; $canRedo: Store<boolean>; undo: EventCallable<void>; redo: EventCallable<void> }` — mirrors CAN_UNDO/CAN_REDO commands and binds UNDO/REDO; needs an active history plugin.
   - `command<P>(cmd: LexicalCommand<P>, priority = COMMAND_PRIORITY_EDITOR): { dispatch: EventCallable<P>; triggered: Event<P> }`. `dispatch(payload)` calls `editor.dispatchCommand`. The internal observer returns `false` (never consumes). `triggered` fires on every dispatch.
   - `mutations<T>(NodeClass, options?: { skipInitialization?: boolean }): Event<{ mutatedNodes: Map<NodeKey, NodeMutation>; updateTags; dirtyLeaves; prevEditorState }>`.
   - `destroy(): void` — unregisters update/text/editable/root listeners + every command()/mutations() listener.

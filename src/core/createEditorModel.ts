@@ -1,6 +1,10 @@
 import {
   createEditor,
   COMMAND_PRIORITY_EDITOR,
+  CAN_UNDO_COMMAND,
+  CAN_REDO_COMMAND,
+  UNDO_COMMAND,
+  REDO_COMMAND,
   $getRoot,
   type CommandListenerPriority,
   type EditorState,
@@ -15,14 +19,18 @@ import {
   createEvent,
   createStore,
   sample,
+  scopeBind,
   type Effect,
   type Event,
+  type EventCallable,
+  type Scope,
   type Store,
 } from 'effector';
 
 import type {
   CommandModel,
   CreateEditorModelConfig,
+  HistoryModel,
   MutationPayload,
   RootPayload,
   UpdateParams,
@@ -64,12 +72,24 @@ export interface EditorModel {
     EditorState | SerializedEditorState | string,
     void
   >;
+  /** Sets the editor's editable mode. */
+  readonly setEditableFx: Effect<boolean, void>;
   readonly focusFx: Effect<void, void>;
   readonly blurFx: Effect<void, void>;
 
   // ── Helpers ───────────────────────────────────────────────────────────
   /** Reads from the current editor state synchronously. */
   read<T>(reader: () => T): T;
+  /**
+   * Binds every listener-driven emission of this model to a forked `scope`,
+   * so `$state`/`$text`/`$editable`/`$json` and `command`/`mutations` events
+   * update that scope instead of the global one. Call once after `fork()`.
+   */
+  attachToScope(scope: Scope): void;
+  /** Reverts {@link attachToScope}; emissions go back to the global scope. */
+  detachScope(): void;
+  /** History units (`$canUndo`/`$canRedo`/`undo`/`redo`); needs an active history plugin. */
+  history(): HistoryModel;
   /** Binds a Lexical command to effector units. */
   command<Payload>(
     command: LexicalCommand<Payload>,
@@ -93,6 +113,15 @@ export function createEditorModel(
   const editor = createEditor(config);
   const teardown: Array<() => void> = [];
 
+  // Lexical listeners fire outside any effector scope. `fire` routes an
+  // emission into the attached scope (if any) via `scopeBind`, so scoped
+  // consumers stay in sync. Defaults to the global scope.
+  let boundScope: Scope | null = null;
+  const fire = <P>(event: EventCallable<P>, payload: P): void => {
+    if (boundScope) scopeBind(event, { scope: boundScope })(payload);
+    else event(payload);
+  };
+
   // ── Events fed by Lexical listeners ───────────────────────────────────
   const updated = createEvent<UpdatePayload>();
   const textChanged = createEvent<string>();
@@ -101,16 +130,16 @@ export function createEditorModel(
 
   teardown.push(
     editor.registerUpdateListener(({ editorState, prevEditorState, tags }) => {
-      updated({ editorState, prevEditorState, tags });
+      fire(updated, { editorState, prevEditorState, tags });
     }),
     editor.registerTextContentListener((text) => {
-      textChanged(text);
+      fire(textChanged, text);
     }),
     editor.registerEditableListener((editable) => {
-      editableChanged(editable);
+      fire(editableChanged, editable);
     }),
     editor.registerRootListener((rootElement, prevRootElement) => {
-      rootChanged({ rootElement, prevRootElement });
+      fire(rootChanged, { rootElement, prevRootElement });
     }),
   );
 
@@ -168,11 +197,22 @@ export function createEditorModel(
     editor.setEditorState(next);
   });
 
+  const setEditableFx = createEffect<boolean, void>((editable) => {
+    editor.setEditable(editable);
+  });
+
   const focusFx = createEffect<void, void>(() => editor.focus());
   const blurFx = createEffect<void, void>(() => editor.blur());
 
   // ── Helpers ───────────────────────────────────────────────────────────
   const read = <T>(reader: () => T): T => editor.getEditorState().read(reader);
+
+  const attachToScope = (scope: Scope): void => {
+    boundScope = scope;
+  };
+  const detachScope = (): void => {
+    boundScope = null;
+  };
 
   const command = <Payload>(
     cmd: LexicalCommand<Payload>,
@@ -185,7 +225,7 @@ export function createEditorModel(
       editor.registerCommand(
         cmd,
         (payload) => {
-          triggered(payload);
+          fire(triggered, payload);
           return false;
         },
         priority,
@@ -209,12 +249,50 @@ export function createEditorModel(
       editor.registerMutationListener(
         node,
         (mutatedNodes, { updateTags, dirtyLeaves, prevEditorState }) => {
-          event({ mutatedNodes, updateTags, dirtyLeaves, prevEditorState });
+          fire(event, {
+            mutatedNodes,
+            updateTags,
+            dirtyLeaves,
+            prevEditorState,
+          });
         },
         options,
       ),
     );
     return event;
+  };
+
+  const history = (): HistoryModel => {
+    const canUndoChanged = createEvent<boolean>();
+    const canRedoChanged = createEvent<boolean>();
+    const $canUndo = createStore(false).on(canUndoChanged, (_, v) => v);
+    const $canRedo = createStore(false).on(canRedoChanged, (_, v) => v);
+
+    teardown.push(
+      editor.registerCommand(
+        CAN_UNDO_COMMAND,
+        (payload) => {
+          fire(canUndoChanged, payload);
+          return false;
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
+      editor.registerCommand(
+        CAN_REDO_COMMAND,
+        (payload) => {
+          fire(canRedoChanged, payload);
+          return false;
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
+    );
+
+    return {
+      $canUndo,
+      $canRedo,
+      undo: command<void>(UNDO_COMMAND).dispatch,
+      redo: command<void>(REDO_COMMAND).dispatch,
+    };
   };
 
   const destroy = (): void => {
@@ -235,11 +313,15 @@ export function createEditorModel(
     $json,
     updateFx,
     setStateFx,
+    setEditableFx,
     focusFx,
     blurFx,
     read,
+    attachToScope,
+    detachScope,
     command,
     mutations,
+    history,
     destroy,
   };
 }

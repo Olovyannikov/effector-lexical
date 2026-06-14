@@ -1,9 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
+import { allSettled, fork } from 'effector';
 import {
   $getRoot,
   $createParagraphNode,
   $createTextNode,
   createCommand,
+  CAN_UNDO_COMMAND,
+  CAN_REDO_COMMAND,
   TextNode,
 } from 'lexical';
 
@@ -190,6 +193,87 @@ describe('createEditorModel', () => {
       await Promise.resolve();
 
       expect(observed).toHaveBeenCalledWith('payload');
+      model.destroy();
+    });
+  });
+
+  it('sets editable mode via setEditableFx', async () => {
+    const model = createEditorModel({ namespace: 'test', onError });
+    expect(model.$editable.getState()).toBe(true);
+
+    await model.setEditableFx(false);
+
+    expect(model.editor.isEditable()).toBe(false);
+    expect(model.$editable.getState()).toBe(false);
+    model.destroy();
+  });
+
+  describe('scope binding', () => {
+    it('routes emissions into the attached scope', async () => {
+      const model = createEditorModel({ namespace: 'test', onError });
+      const scope = fork();
+      model.attachToScope(scope);
+
+      await model.updateFx(writeText('scoped'));
+
+      expect(scope.getState(model.$text)).toBe('scoped');
+      // global store stays at its initial value
+      expect(model.$text.getState()).toBe('');
+      model.destroy();
+    });
+
+    it('stays scope-safe when driven through allSettled', async () => {
+      const model = createEditorModel({ namespace: 'test', onError });
+      const scope = fork();
+      model.attachToScope(scope);
+
+      // Idiomatic: run the effect in the scope; listener emissions are routed
+      // into the same scope by attachToScope.
+      await allSettled(model.updateFx, {
+        scope,
+        params: writeText('via allSettled'),
+      });
+
+      expect(scope.getState(model.$text)).toBe('via allSettled');
+      expect(model.$text.getState()).toBe('');
+      model.destroy();
+    });
+
+    it('detachScope reverts to the global scope', async () => {
+      const model = createEditorModel({ namespace: 'test', onError });
+      const scope = fork();
+      model.attachToScope(scope);
+      model.detachScope();
+
+      await model.updateFx(writeText('global again'));
+
+      expect(model.$text.getState()).toBe('global again');
+      expect(scope.getState(model.$text)).toBe('');
+      model.destroy();
+    });
+  });
+
+  describe('history', () => {
+    it('mirrors CAN_UNDO/CAN_REDO commands into stores', () => {
+      const model = createEditorModel({ namespace: 'test', onError });
+      const { $canUndo, $canRedo } = model.history();
+
+      expect($canUndo.getState()).toBe(false);
+      model.editor.dispatchCommand(CAN_UNDO_COMMAND, true);
+      model.editor.dispatchCommand(CAN_REDO_COMMAND, true);
+
+      expect($canUndo.getState()).toBe(true);
+      expect($canRedo.getState()).toBe(true);
+      model.destroy();
+    });
+
+    it('exposes callable undo/redo events', () => {
+      const model = createEditorModel({ namespace: 'test', onError });
+      const { undo, redo } = model.history();
+      expect(() => {
+        undo();
+        redo();
+      }).not.toThrow();
       model.destroy();
     });
   });

@@ -56,11 +56,15 @@ theme, onError, editable, editorState, …), forwarded verbatim.
 | `$json`           | `Store<SerializedEditorState>`                      | `$state.map(toJSON)`          |
 | `updateFx`        | `Effect<UpdateParams, void>`                        | `editor.update`               |
 | `setStateFx`      | `Effect<EditorState \| Serialized \| string, void>` | `editor.setEditorState`       |
+| `setEditableFx`   | `Effect<boolean, void>`                             | `editor.setEditable`          |
 | `focusFx`         | `Effect<void, void>`                                | `editor.focus`                |
 | `blurFx`          | `Effect<void, void>`                                | `editor.blur`                 |
 | `read`            | `<T>(reader: () => T) => T`                         | `editorState.read`            |
+| `attachToScope`   | `(scope: Scope) => void`                            | `scopeBind` rebinding         |
+| `detachScope`     | `() => void`                                        | clears bound scope            |
 | `command`         | `(cmd, priority?) => CommandModel`                  | `registerCommand`/`dispatch`  |
 | `mutations`       | `(NodeClass, options?) => Event`                    | `registerMutationListener`    |
+| `history`         | `() => HistoryModel`                                | CAN_UNDO/CAN_REDO + commands  |
 | `destroy`         | `() => void`                                        | all unsubscribers             |
 
 ### 3.3 Behavioural contracts
@@ -82,11 +86,12 @@ theme, onError, editable, editorState, …), forwarded verbatim.
   object is treated as a serialized state and parsed.
 - **`destroy()` is total.** It removes the update/text/editable/root listeners
   plus every listener created by `command()` and `mutations()`.
-- **Listener emissions are scope-less.** Events fed by Lexical listeners are
-  called from Lexical callbacks, i.e. **outside any effector scope**, so they
-  update the global store states rather than a forked scope's copies. Use the
-  model at the global scope; for `fork`-based reactivity see the roadmap note in
-  _Non-goals_. Full explanation: docs → Recipes → _Scope, SSR & testing_.
+- **Listener emissions default to the global scope.** Events fed by Lexical
+  listeners are called from Lexical callbacks, i.e. outside any effector scope,
+  so by default they update the global store states. Call `attachToScope(scope)`
+  to route every emission (core events, `command` and `mutations`) into a forked
+  scope via `scopeBind`; `detachScope()` reverts. Full explanation: docs →
+  Recipes → _Scope, SSR & testing_.
 
 ## 4. React adapter
 
@@ -107,8 +112,8 @@ their preferred method.
 - No bundled UI / toolbar components.
 - No `effector` scope/`fork` serialization of the editor instance (it is not
   serializable; SSR is supported only for headless state parsing). Listener-fed
-  stores update the global scope only (see §3.3). A scoped variant —
-  `attachToScope(scope)` re-binding emitters via `scopeBind` — is on the roadmap.
+  stores can be routed into a forked scope with `attachToScope` (§3.3), but the
+  editor object itself is never duplicated per scope.
 - Solid/Vue adapters — planned, not in v0.
 
 ## 6. Versioning & tooling

@@ -76,6 +76,15 @@ JSON string (parsed via `editor.parseEditorState`).
 await editor.setStateFx(jsonStringFromServer);
 ```
 
+#### `setEditableFx`
+
+`Effect<boolean, void>` wrapping `editor.setEditable()`. `$editable` updates via
+the editable listener.
+
+```ts
+await editor.setEditableFx(false); // read-only
+```
+
 #### `focusFx` / `blurFx`
 
 `Effect<void, void>` wrapping `editor.focus()` / `editor.blur()`.
@@ -89,6 +98,37 @@ Synchronously reads from the current editor state.
 ```ts
 const text = editor.read(() => $getRoot().getTextContent());
 ```
+
+#### `attachToScope(scope)` / `detachScope()`
+
+Binds every listener-driven emission to a forked effector `scope` (via
+`scopeBind`), so the model's stores and `command`/`mutations` events update that
+scope instead of the global one. Call once after `fork()`; `detachScope()`
+reverts to the global scope. See [Scope, SSR & testing](../recipes/scope).
+
+```ts
+import { fork } from 'effector';
+
+const scope = fork();
+editor.attachToScope(scope);
+// now scope.getState(editor.$text) tracks edits
+```
+
+#### `history()`
+
+Returns history units backed by Lexical's history commands. Requires an active
+history plugin (`<HistoryPlugin />` or `registerHistory`).
+
+```ts
+const { $canUndo, $canRedo, undo, redo } = editor.history();
+```
+
+| Member     | Type                  | Description                  |
+| ---------- | --------------------- | ---------------------------- |
+| `$canUndo` | `Store<boolean>`      | `CAN_UNDO_COMMAND` mirrored. |
+| `$canRedo` | `Store<boolean>`      | `CAN_REDO_COMMAND` mirrored. |
+| `undo`     | `EventCallable<void>` | Dispatches `UNDO_COMMAND`.   |
+| `redo`     | `EventCallable<void>` | Dispatches `REDO_COMMAND`.   |
 
 #### `command(command, priority?)`
 
