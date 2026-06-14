@@ -4,22 +4,34 @@
 
 `mutations(NodeClass)` turns Lexical's mutation listener into an event whose
 payload includes a `mutatedNodes` map (`NodeKey → 'created' | 'updated' |
-'destroyed'`).
+'destroyed'`). Keep the side effect in an effect and wire it with `sample` —
+don't put logic in `.watch`.
 
 ```ts
+import { createEffect, sample } from 'effector';
 import { LinkNode } from '@lexical/link';
 
-editor.mutations(LinkNode).watch(({ mutatedNodes }) => {
-  for (const [key, kind] of mutatedNodes) {
-    if (kind === 'created') analytics.track('link_added', { key });
-  }
+const linkMutations = editor.mutations(LinkNode);
+
+const trackLinksFx = createEffect(
+  (mutatedNodes: Map<NodeKey, NodeMutation>) => {
+    for (const [key, kind] of mutatedNodes) {
+      if (kind === 'created') analytics.track('link_added', { key });
+    }
+  },
+);
+
+sample({
+  clock: linkMutations,
+  fn: ({ mutatedNodes }) => mutatedNodes,
+  target: trackLinksFx,
 });
 ```
 
-Skip the initial pass over existing nodes:
+Skip the initial pass over existing nodes with `skipInitialization`:
 
 ```ts
-editor.mutations(LinkNode, { skipInitialization: true }).watch(/* … */);
+const linkMutations = editor.mutations(LinkNode, { skipInitialization: true });
 ```
 
 ## Count nodes of a type

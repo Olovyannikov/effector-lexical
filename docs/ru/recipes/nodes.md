@@ -4,22 +4,35 @@
 
 `mutations(NodeClass)` превращает листенер мутаций Lexical в событие, чья
 полезная нагрузка включает мапу `mutatedNodes` (`NodeKey → 'created' | 'updated'
-| 'destroyed'`).
+| 'destroyed'`). Держите сайд-эффект в эффекте и связывайте через `sample` — не
+кладите логику в `.watch`.
 
 ```ts
+import { createEffect, sample } from 'effector';
 import { LinkNode } from '@lexical/link';
 
-editor.mutations(LinkNode).watch(({ mutatedNodes }) => {
-  for (const [key, kind] of mutatedNodes) {
-    if (kind === 'created') analytics.track('link_added', { key });
-  }
+const linkMutations = editor.mutations(LinkNode);
+
+const trackLinksFx = createEffect(
+  (mutatedNodes: Map<NodeKey, NodeMutation>) => {
+    for (const [key, kind] of mutatedNodes) {
+      if (kind === 'created') analytics.track('link_added', { key });
+    }
+  },
+);
+
+sample({
+  clock: linkMutations,
+  fn: ({ mutatedNodes }) => mutatedNodes,
+  target: trackLinksFx,
 });
 ```
 
-Пропустить первоначальный проход по существующим нодам:
+Пропустить первоначальный проход по существующим нодам через
+`skipInitialization`:
 
 ```ts
-editor.mutations(LinkNode, { skipInitialization: true }).watch(/* … */);
+const linkMutations = editor.mutations(LinkNode, { skipInitialization: true });
 ```
 
 ## Подсчёт нод определённого типа
