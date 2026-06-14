@@ -1,0 +1,110 @@
+# effector-lexical — full reference for LLMs
+
+Effector bindings for the Lexical editor. Two entry points:
+- `effector-lexical` — framework-agnostic core.
+- `effector-lexical/react` — React adapter (optional peers: react, @lexical/react).
+
+Peer deps: effector >=23, lexical >=0.40 (required); react >=18, @lexical/react >=0.40 (optional).
+
+## Mental model
+
+Lexical is imperative: a mutable `LexicalEditor`, listeners registered via `register*` (each returns an unsubscribe fn), and mutations via `editor.update(fn)`. effector is declarative. This library maps:
+- Lexical listeners → effector events.
+- Editor state → effector stores.
+- Edits/commands → effector effects.
+The model OWNS the editor (calls `createEditor`) and OWNS every listener's lifecycle. `destroy()` removes all of them.
+
+## Core API
+
+### createEditorModel(config?) => EditorModel
+`config` is Lexical's `CreateEditorArgs` (namespace, nodes, theme, onError, editable, editorState). Calls `createEditor(config)` and registers listeners immediately.
+
+### EditorModel members
+- `editor: LexicalEditor` — owned instance.
+- `$instance: Store<LexicalEditor>`.
+- Events: `updated: Event<{editorState, prevEditorState, tags}>`, `textChanged: Event<string>`, `editableChanged: Event<boolean>`, `rootChanged: Event<{rootElement, prevRootElement}>`.
+- Stores: `$state: Store<EditorState>`, `$text: Store<string>`, `$editable: Store<boolean>`, `$json: Store<SerializedEditorState>` (= `$state.map(s => s.toJSON())`).
+- Effects:
+  - `updateFx: Effect<UpdateParams, void>` — wraps `editor.update`; resolves AFTER reconciliation (onUpdate). `UpdateParams = (() => void) | { run: () => void; options?: EditorUpdateOptions }`. Throwing writer rejects the effect.
+  - `setStateFx: Effect<EditorState | SerializedEditorState | string, void>` — string/serialized parsed via `parseEditorState`; live EditorState (has `.read`) used directly; then `setEditorState`.
+  - `focusFx: Effect<void, void>`, `blurFx: Effect<void, void>`.
+- Helpers:
+  - `read<T>(reader: () => T): T` — synchronous `editorState.read`.
+  - `command<P>(cmd: LexicalCommand<P>, priority = COMMAND_PRIORITY_EDITOR): { dispatch: EventCallable<P>; triggered: Event<P> }`. `dispatch(payload)` calls `editor.dispatchCommand`. The internal observer returns `false` (never consumes). `triggered` fires on every dispatch.
+  - `mutations<T>(NodeClass, options?: { skipInitialization?: boolean }): Event<{ mutatedNodes: Map<NodeKey, NodeMutation>; updateTags; dirtyLeaves; prevEditorState }>`.
+  - `destroy(): void` — unregisters update/text/editable/root listeners + every command()/mutations() listener.
+
+### Critical implementation note
+Lexical treats a listener's return value as a teardown function (`listener(...args) || undefined`). Calling an effector event returns its payload, so all internal listener callbacks are wrapped to return `undefined`. If you write your own raw Lexical listener that calls an effector event, wrap it in a block: `editor.registerUpdateListener(() => { myEvent(); })` — NOT `=> myEvent()`.
+
+## React API (effector-lexical/react)
+
+- `<EditorProvider model={EditorModel}>children</EditorProvider>` — replaces `<LexicalComposer>`. Injects `[model.editor, createLexicalComposerContext(null, editor._config.theme)]` into `LexicalComposerContext`, so standard @lexical/react plugins work (RichTextPlugin, PlainTextPlugin, ContentEditable, HistoryPlugin, ListPlugin, …). Also provides the model to hooks.
+- `useEditorModel(): EditorModel` — throws outside a provider.
+- `useEditorInstance(): LexicalEditor`.
+- Does NOT bundle effector-react. Read stores with `useUnit` from effector-react.
+
+## Idiomatic usage
+
+```ts
+import { createEditorModel } from 'effector-lexical';
+import { FORMAT_TEXT_COMMAND, UNDO_COMMAND, type TextFormatType } from 'lexical';
+
+export const editor = createEditorModel({ namespace: 'app', onError: (e) => { throw e; } });
+const format = editor.command<TextFormatType>(FORMAT_TEXT_COMMAND);
+export const bold = format.dispatch.prepend(() => 'bold' as const);
+export const undo = editor.command<void>(UNDO_COMMAND).dispatch;
+export const $chars = editor.$text.map((t) => t.length);
+```
+
+```tsx
+import { useUnit } from 'effector-react';
+import { EditorProvider } from 'effector-lexical/react';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+
+function App() {
+  const onBold = useUnit(bold);
+  return (
+    <EditorProvider model={editor}>
+      <button onClick={() => onBold()}>Bold</button>
+      <RichTextPlugin contentEditable={<ContentEditable />} placeholder={<div>Type…</div>} ErrorBoundary={LexicalErrorBoundary} />
+      <HistoryPlugin />
+    </EditorProvider>
+  );
+}
+```
+
+## Recipes
+
+Autosave (debounced):
+```ts
+sample({ clock: debounce(editor.updated, 800), source: editor.$json, target: saveFx });
+```
+Load from server (returns JSON string):
+```ts
+sample({ clock: loadFx.doneData, target: editor.setStateFx });
+```
+Persist to localStorage:
+```ts
+sample({ clock: editor.$json, target: createEffect((j) => localStorage.setItem('doc', JSON.stringify(j))) });
+```
+Selection-aware toolbar state:
+```ts
+sample({ clock: editor.updated, fn: () => editor.read(() => {
+  const s = $getSelection(); return $isRangeSelection(s) ? s.hasFormat('bold') : false;
+}), target: $isBold });
+```
+Node mutations:
+```ts
+editor.mutations(LinkNode).watch(({ mutatedNodes }) => { /* key -> 'created'|'updated'|'destroyed' */ });
+```
+Headless write:
+```ts
+await editor.updateFx(() => { const r = $getRoot(); r.clear(); r.append($createParagraphNode().append($createTextNode('hi'))); });
+```
+
+## Non-goals (v0)
+No bundled UI components. No fork/SSR serialization of the editor instance (not serializable; headless state parsing works). Solid/Vue adapters planned, not in v0.

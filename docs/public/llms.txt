@@ -1,0 +1,20 @@
+# effector-lexical
+
+> Effector bindings for the Lexical text editor. Lexical listeners become effector events; editor state is mirrored into stores ($text, $state, $json, $editable); edits and commands go out through effects. The framework-agnostic core owns the editor; a thin React adapter injects it into LexicalComposerContext.
+
+Key idea: bridge Lexical's imperative API (mutable editor + register* listeners + commands) to effector's declarative stores/events/effects, with no subscription leaks (the model owns the lifecycle via destroy()).
+
+## Docs
+
+- [What & why](https://olovyannikov.github.io/effector-lexical/guide/getting-started): the imperative↔declarative bridge and design overview.
+- [Installation](https://olovyannikov.github.io/effector-lexical/guide/installation): peer deps and entry points (`.` core, `./react`).
+- [Quick start](https://olovyannikov.github.io/effector-lexical/guide/quick-start): model + React, and headless usage.
+- [Core API](https://olovyannikov.github.io/effector-lexical/api/core): createEditorModel and the EditorModel units.
+- [React API](https://olovyannikov.github.io/effector-lexical/api/react): EditorProvider, useEditorModel, useEditorInstance.
+- [Recipes](https://olovyannikov.github.io/effector-lexical/recipes): autosave, load/persist, read-only, counters, toolbar, mutations.
+- [Examples](https://olovyannikov.github.io/effector-lexical/examples): full React app and headless snippet.
+
+## Optional
+
+- [Specification](https://github.com/Olovyannikov/effector-lexical/blob/main/SPEC.md): behavioural contracts and design decisions.
+- [Full LLM text](https://olovyannikov.github.io/effector-lexical/llms-full.txt): condensed API + recipes inline.
