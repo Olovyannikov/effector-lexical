@@ -41,6 +41,11 @@ import {
 
 import { createEditorModel } from '../../../../src';
 import { EditorProvider, useEditorInstance } from '../../../../src/react';
+import {
+  SHOW_INVISIBLES_NODES,
+  registerShowInvisibles,
+  refreshInvisibles,
+} from './showInvisibles';
 
 const editor = createEditorModel({
   namespace: 'playground',
@@ -52,6 +57,7 @@ const editor = createEditorModel({
     LinkNode,
     CodeNode,
     CodeHighlightNode,
+    ...SHOW_INVISIBLES_NODES,
   ],
   theme: {
     heading: { h1: 'pg-h1', h2: 'pg-h2' },
@@ -158,6 +164,9 @@ const $words = editor.$text.map((t) =>
 // ── "Show formatting marks" toggle (pure effector state) ────────────────
 const toggleMarks = createEvent();
 const $marks = createStore(false).on(toggleMarks, (on) => !on);
+
+// Convert whitespace / line breaks into marker nodes while marks are on.
+registerShowInvisibles(editor.editor, () => $marks.getState());
 
 // Platform-aware shortcut hints for tooltips.
 const IS_APPLE =
@@ -352,6 +361,8 @@ function FormattingMarksPlugin() {
     apply(editor.getRootElement());
     return editor.registerRootListener(apply);
   }, [editor, on]);
+  // Re-process existing content (convert/revert markers) on toggle.
+  useEffect(() => refreshInvisibles(editor), [editor, on]);
   return null;
 }
 

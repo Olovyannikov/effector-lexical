@@ -60,29 +60,70 @@ it so the `¶` stays on the same line instead of dropping to the next one.
 }
 ```
 
-## Why per-space dots and `↵` aren't included
+## Per-space dots and `↵` (custom nodes)
 
-Showing a `·` for **every space** (like Word) or a `↵` for soft line breaks
-looks easy but isn't robust on an **editable** Lexical surface:
+Showing a `·` for **every space** and a `↵` for soft line breaks needs more than
+CSS: an unformatted text run is a single DOM text node, and `<br>` can't carry
+generated content. The naive fix — a transform that tags whitespace with an
+inline `style`/`format` — **breaks typing**, because Lexical **inherits a text
+node's `format`/`style` onto newly typed text**, so characters typed after a
+marked space inherit the marker and render invisible.
 
-- An unformatted text run is a **single DOM text node** — there is no per-space
-  element to target with CSS, and Lexical owns the DOM, so marker spans injected
-  from the outside are wiped on the next reconciliation.
-- A `<br>` (LineBreakNode) **can't carry generated content** reliably across
-  browsers, so `br::after { content: '↵' }` is unreliable.
+The robust route is a **dedicated node type** — the marker lives in the node's
+**type** and a real `class` (neither is inherited on typing), so new text is a
+plain `TextNode` and stays visible.
 
-The tempting fix — a node transform that splits each space into a `token` node
-tagged with an inline `style`/`format` so CSS can mark it — **breaks typing**:
-Lexical **inherits a text node's `format` and `style` onto newly typed text**, so
-the next characters you type after a marked space inherit the marker and render
-invisible. (We tried it; don't.)
+```ts
+import { TextNode, type EditorConfig } from 'lexical';
 
-The only correct route is a **dedicated node type** — a `TextNode` subclass whose
-`createDOM` adds a real `class` (not `format`/`style`, which would be inherited) —
-registered via a node replacement, plus a transform that converts whitespace into
-it and back. That's a fair amount of machinery and still has selection/clipboard
-edge cases, so it's out of scope here.
+export class WhitespaceNode extends TextNode {
+  static getType() {
+    return 'whitespace';
+  }
+  static clone(n: WhitespaceNode) {
+    return new WhitespaceNode(n.__text, n.__key);
+  }
+  createDOM(config: EditorConfig) {
+    const dom = super.createDOM(config);
+    dom.classList.add('ws-mark'); // class, not format/style → not inherited
+    return dom;
+  }
+  // keep it a single space; typed text lands in sibling plain nodes
+  canInsertTextBefore() {
+    return false;
+  }
+  canInsertTextAfter() {
+    return false;
+  }
+}
+```
 
-For a primary editing surface, prefer the block-level `¶` marks above — they're
-robust and match Word's model: **Enter** ends a paragraph (`¶`), **Shift+Enter**
-inserts a line break.
+A transform converts whitespace into `WhitespaceNode` while the toggle is on and
+reverts it when off (a sibling transform on `WhitespaceNode` turns it back into a
+plain `TextNode`, which then merges). A `LineBreakNode` subclass does the same
+for `↵`. CSS keeps the real space (for copy/paste) but draws the dot:
+
+```css
+.editor.marks-on .ws-mark {
+  position: relative;
+  color: transparent;
+}
+.editor.marks-on .ws-mark::before {
+  content: '·';
+  position: absolute;
+  inset: 0;
+  text-align: center;
+}
+.editor.marks-on .lb-mark::before {
+  content: '↵';
+}
+```
+
+The full implementation (both node types, the transforms and a `refresh` helper
+to re-process content on toggle) is in the playground source:
+[`showInvisibles.ts`](https://github.com/Olovyannikov/effector-lexical/blob/main/docs/.vitepress/theme/demo/showInvisibles.ts).
+Try it on the [Playground](/playground) with the ¶ toggle.
+
+::: tip Word model
+**Enter** ends a paragraph (`¶`), **Shift+Enter** inserts a line break (`↵`).
+:::
