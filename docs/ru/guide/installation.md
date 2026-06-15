@@ -27,12 +27,14 @@ pnpm add react @lexical/react
 `react` и `@lexical/react` — **опциональные** peer-зависимости: они нужны только тогда, когда вы
 импортируете из `effector-lexical/react`.
 
-| Пакет            | Требуется для            | Мин. версия |
-| ---------------- | ------------------------ | ----------- |
-| `effector`       | ядро                     | `>=23`      |
-| `lexical`        | ядро                     | `>=0.40`    |
-| `react`          | `effector-lexical/react` | `>=18`      |
-| `@lexical/react` | `effector-lexical/react` | `>=0.40`    |
+| Пакет               | Требуется для               | Мин. версия |
+| ------------------- | --------------------------- | ----------- |
+| `effector`          | ядро                        | `>=23`      |
+| `lexical`           | ядро                        | `>=0.40`    |
+| `react`             | `effector-lexical/react`    | `>=18`      |
+| `@lexical/react`    | `effector-lexical/react`    | `>=0.40`    |
+| `@lexical/html`     | `effector-lexical/html`     | `>=0.40`    |
+| `@lexical/markdown` | `effector-lexical/markdown` | `>=0.40`    |
 
 ## Точки входа
 
@@ -42,4 +44,8 @@ import { createEditorModel } from 'effector-lexical';
 
 // React-адаптер
 import { EditorProvider, useEditorModel } from 'effector-lexical/react';
+
+// Сериализация HTML / Markdown
+import { createHtmlApi } from 'effector-lexical/html';
+import { createMarkdownApi } from 'effector-lexical/markdown';
 ```

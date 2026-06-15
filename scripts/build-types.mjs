@@ -9,6 +9,8 @@ const external = [/^effector/, /^lexical/, /^react/, /^@lexical\//];
 const entries = [
   { input: 'src/index.ts', file: 'dist/index.d.ts' },
   { input: 'src/react/index.ts', file: 'dist/react/index.d.ts' },
+  { input: 'src/html/index.ts', file: 'dist/html/index.d.ts' },
+  { input: 'src/markdown/index.ts', file: 'dist/markdown/index.d.ts' },
 ];
 
 for (const { input, file } of entries) {
