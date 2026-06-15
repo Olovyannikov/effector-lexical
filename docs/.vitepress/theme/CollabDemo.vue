@@ -27,6 +27,29 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
+.lexical-collab .collab-presence {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+}
+.lexical-collab .collab-chip {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.lexical-collab .collab-muted {
+  color: var(--vp-c-text-3);
+}
+.lexical-collab .collab-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .lexical-collab .collab-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -92,6 +92,47 @@ The model's own stores keep working: `$text`, `$json`, `updated` reflect
 remote edits too, because they're driven by the editor's listeners regardless of
 who made the change.
 
+## Cursors & presence (awareness)
+
+Yjs has two channels: the **document** (persistent content) and **awareness**
+(ephemeral presence — who's online, where their cursor is, name, color). Pass
+`username` / `cursorColor` to render remote carets, and feed awareness changes
+into an effector store for an "online" indicator:
+
+```ts
+import { createEvent, createStore } from 'effector';
+
+const presenceChanged = createEvent<{ name: string; color: string }[]>();
+export const $presence = createStore<{ name: string; color: string }[]>([]).on(
+  presenceChanged,
+  (_, peers) => peers,
+);
+
+// `provider.awareness` after the factory created it:
+provider.awareness.on('change', () =>
+  presenceChanged(
+    [...provider.awareness.getStates().values()].map((s) => ({
+      name: s.name,
+      color: s.color,
+    })),
+  ),
+);
+```
+
+```tsx
+<CollaborationPlugin
+  id="room-1"
+  providerFactory={providerFactory}
+  shouldBootstrap
+  username="Alice"
+  cursorColor="#e11d48"
+/>
+```
+
+The in-page demo above does exactly this — two docs relayed in-memory (one per
+editor, with origin guards to avoid an echo loop), awareness relayed between
+them, and `$presence` driving the chips.
+
 ::: tip Runnable example
 [`examples/react-collab`](https://github.com/Olovyannikov/effector-lexical/tree/main/examples/react-collab)
 is a full app (open it in two tabs to see live sync) using the public

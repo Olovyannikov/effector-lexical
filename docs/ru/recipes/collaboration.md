@@ -93,6 +93,46 @@ const status = useUnit($status); // 'connecting' | 'connected' | 'disconnected'
 удалённые правки, потому что они питаются листенерами редактора — независимо от
 того, кто внёс изменение.
 
+## Курсоры и присутствие (awareness)
+
+В Yjs два канала: **документ** (персистентный контент) и **awareness**
+(эфемерное присутствие — кто онлайн, где курсор, имя, цвет). Передайте
+`username` / `cursorColor`, чтобы рисовались чужие каретки, и прокиньте
+изменения awareness в стор effector для индикатора «онлайн»:
+
+```ts
+import { createEvent, createStore } from 'effector';
+
+const presenceChanged = createEvent<{ name: string; color: string }[]>();
+export const $presence = createStore<{ name: string; color: string }[]>([]).on(
+  presenceChanged,
+  (_, peers) => peers,
+);
+
+// `provider.awareness` после того, как фабрика его создала:
+provider.awareness.on('change', () =>
+  presenceChanged(
+    [...provider.awareness.getStates().values()].map((s) => ({
+      name: s.name,
+      color: s.color,
+    })),
+  ),
+);
+```
+
+```tsx
+<CollaborationPlugin
+  id="room-1"
+  providerFactory={providerFactory}
+  shouldBootstrap
+  username="Alice"
+  cursorColor="#e11d48"
+/>
+```
+
+Демо выше делает ровно это — два дока, реле в памяти (по одному на редактор, с
+origin-guard против эхо-петли), awareness тоже реле, а `$presence` рисует чипы.
+
 ::: tip Рабочий пример
 [`examples/react-collab`](https://github.com/Olovyannikov/effector-lexical/tree/main/examples/react-collab)
 — полноценное приложение (откройте в двух вкладках, чтобы увидеть синхронизацию)
