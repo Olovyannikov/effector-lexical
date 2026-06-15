@@ -5,6 +5,11 @@ Real-time collaboration is a standard `@lexical/react` plugin —
 (the provider injects the editor into `LexicalComposerContext`, which the plugin
 reads). effector's job is the **connection state** around the provider.
 
+Two independent editors below (each its own `createEditorModel`) share one
+in-memory `Y.Doc` — type in either and watch them sync, no server:
+
+<LexicalCollab />
+
 ```bash
 pnpm add yjs y-websocket
 ```

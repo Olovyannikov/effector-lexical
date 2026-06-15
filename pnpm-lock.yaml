@@ -131,6 +131,12 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@25.9.3)(jsdom@25.0.1)
+      y-websocket:
+        specifier: ^2.1.0
+        version: 2.1.0(yjs@13.6.31)
+      yjs:
+        specifier: ^13.6.31
+        version: 13.6.31
 
   examples/react-basic:
     dependencies:
