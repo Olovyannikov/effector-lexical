@@ -76,6 +76,22 @@ onBeforeUnmount(() => {
 .lexical-playground .pg-input-wrap {
   position: relative;
 }
+.lexical-playground .pg-md {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 220px;
+  padding: 1rem 1.1rem;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
 .lexical-playground .pg-input {
   min-height: 220px;
   padding: 1rem 1.1rem;

@@ -8,7 +8,10 @@ effector:
 - the **active** format and current **block type** come from a store derived
   from the `updated` event (see [Selection & formatting](./recipes/selection));
 - undo/redo availability is `history()`'s `$canUndo` / `$canRedo`;
-- the footer counters read the `$text` store.
+- the footer counters read the `$text` store;
+- the **MD** button switches to a Markdown source view — `exportMarkdownFx`
+  dumps the content on the way in, `importMarkdownFx` applies your edits on the
+  way back (see [HTML & Markdown](./recipes/serialization)).
 
 <LexicalPlayground />
 

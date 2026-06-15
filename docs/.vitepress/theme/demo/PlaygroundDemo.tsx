@@ -41,6 +41,7 @@ import {
 
 import { createEditorModel } from '../../../../src';
 import { EditorProvider, useEditorInstance } from '../../../../src/react';
+import { createMarkdownApi } from '../../../../src/markdown';
 import {
   SHOW_INVISIBLES_NODES,
   registerShowInvisibles,
@@ -168,6 +169,31 @@ const $marks = createStore(false).on(toggleMarks, (on) => !on);
 // Convert whitespace / line breaks into marker nodes while marks are on.
 registerShowInvisibles(editor.editor, () => $marks.getState());
 
+// ── Markdown source mode ────────────────────────────────────────────────
+const { exportMarkdownFx, importMarkdownFx } = createMarkdownApi(editor);
+const toggleMarkdown = createEvent();
+const editMarkdown = createEvent<string>();
+const $markdownMode = createStore(false).on(toggleMarkdown, (on) => !on);
+const $md = createStore('')
+  .on(editMarkdown, (_, value) => value)
+  .on(exportMarkdownFx.doneData, (_, value) => value);
+
+// Entering source mode → dump current content to Markdown.
+sample({
+  clock: toggleMarkdown,
+  source: $markdownMode,
+  filter: (on) => on,
+  target: exportMarkdownFx,
+});
+// Leaving source mode → apply the edited Markdown back to the editor.
+sample({
+  clock: toggleMarkdown,
+  source: { on: $markdownMode, md: $md },
+  filter: ({ on }) => !on,
+  fn: ({ md }) => md,
+  target: importMarkdownFx,
+});
+
 // Platform-aware shortcut hints for tooltips.
 const IS_APPLE =
   typeof navigator !== 'undefined' &&
@@ -195,6 +221,7 @@ function Toolbar() {
     onUndo,
     onRedo,
     onToggleMarks,
+    onToggleMarkdown,
   ] = useUnit([
     bold,
     italic,
@@ -214,12 +241,14 @@ function Toolbar() {
     undo,
     redo,
     toggleMarks,
+    toggleMarkdown,
   ]);
-  const [active, canUndo, canRedo, marks] = useUnit([
+  const [active, canUndo, canRedo, marks, mdMode] = useUnit([
     $active,
     $canUndo,
     $canRedo,
     $marks,
+    $markdownMode,
   ]);
 
   const block = (
@@ -231,6 +260,7 @@ function Toolbar() {
     <button
       className={active.block === value ? 'pg-btn pg-on' : 'pg-btn'}
       title={title}
+      disabled={mdMode}
       onClick={onClick}
     >
       {label}
@@ -245,6 +275,7 @@ function Toolbar() {
     <button
       className={on ? 'pg-btn pg-on' : 'pg-btn'}
       title={title}
+      disabled={mdMode}
       onClick={onClick}
     >
       {label}
@@ -256,7 +287,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title={`Undo (${sc('Z')})`}
-        disabled={!canUndo}
+        disabled={!canUndo || mdMode}
         onClick={() => onUndo()}
       >
         ↶
@@ -264,7 +295,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title={`Redo (${REDO_HINT})`}
-        disabled={!canRedo}
+        disabled={!canRedo || mdMode}
         onClick={() => onRedo()}
       >
         ↷
@@ -283,12 +314,18 @@ function Toolbar() {
       )}
       {fmt('<>', active.code, 'Inline code', () => onInlineCode())}
       <span className="pg-sep" />
-      <button className="pg-btn" title="Bullet list" onClick={() => onBullet()}>
+      <button
+        className="pg-btn"
+        title="Bullet list"
+        disabled={mdMode}
+        onClick={() => onBullet()}
+      >
         • List
       </button>
       <button
         className="pg-btn"
         title="Numbered list"
+        disabled={mdMode}
         onClick={() => onNumber()}
       >
         1. List
@@ -296,6 +333,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title="Insert link"
+        disabled={mdMode}
         onClick={() => {
           const url = window.prompt('Link URL');
           onLink(url ? url : null);
@@ -307,6 +345,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title="Align left"
+        disabled={mdMode}
         onClick={() => onAlignLeft()}
       >
         ⇤
@@ -314,6 +353,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title="Align center"
+        disabled={mdMode}
         onClick={() => onAlignCenter()}
       >
         ⇔
@@ -321,6 +361,7 @@ function Toolbar() {
       <button
         className="pg-btn"
         title="Align right"
+        disabled={mdMode}
         onClick={() => onAlignRight()}
       >
         ⇥
@@ -329,9 +370,17 @@ function Toolbar() {
       <button
         className={marks ? 'pg-btn pg-on' : 'pg-btn'}
         title="Show formatting marks"
+        disabled={mdMode}
         onClick={() => onToggleMarks()}
       >
         ¶
+      </button>
+      <button
+        className={mdMode ? 'pg-btn pg-on' : 'pg-btn'}
+        title="Markdown source"
+        onClick={() => onToggleMarkdown()}
+      >
+        MD
       </button>
     </div>
   );
@@ -367,25 +416,37 @@ function FormattingMarksPlugin() {
 }
 
 export function PlaygroundDemo() {
+  const [mdMode, md] = useUnit([$markdownMode, $md]);
+  const onEditMarkdown = useUnit(editMarkdown);
   return (
     <EditorProvider model={editor}>
       <div className="pg-shell">
         <Toolbar />
-        <div className="pg-input-wrap">
-          <RichTextPlugin
-            contentEditable={<ContentEditable className="pg-input" />}
-            placeholder={
-              <div className="pg-placeholder">
-                Headings, lists, links, formatting — all wired through effector…
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
+        {mdMode ? (
+          <textarea
+            className="pg-md"
+            value={md}
+            spellCheck={false}
+            onChange={(e) => onEditMarkdown(e.currentTarget.value)}
           />
-          <HistoryPlugin />
-          <ListPlugin />
-          <LinkPlugin />
-          <FormattingMarksPlugin />
-        </div>
+        ) : (
+          <div className="pg-input-wrap">
+            <RichTextPlugin
+              contentEditable={<ContentEditable className="pg-input" />}
+              placeholder={
+                <div className="pg-placeholder">
+                  Headings, lists, links, formatting — all wired through
+                  effector…
+                </div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <ListPlugin />
+            <LinkPlugin />
+            <FormattingMarksPlugin />
+          </div>
+        )}
         <Footer />
       </div>
     </EditorProvider>

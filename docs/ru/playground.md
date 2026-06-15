@@ -8,7 +8,10 @@
 - **активный** формат и текущий **тип блока** берутся из стора, производного от
   события `updated` (см. [Выделение и форматирование](./recipes/selection));
 - доступность undo/redo — это `$canUndo` / `$canRedo` из `history()`;
-- счётчики в футере читают стор `$text`.
+- счётчики в футере читают стор `$text`;
+- кнопка **MD** переключает на исходник в Markdown — `exportMarkdownFx`
+  выгружает контент при входе, `importMarkdownFx` применяет правки при возврате
+  (см. [HTML и Markdown](./recipes/serialization)).
 
 <LexicalPlayground />
 
