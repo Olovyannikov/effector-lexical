@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import effector from 'eslint-plugin-effector';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
@@ -20,6 +21,26 @@ export default tseslint.config(
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  // effector idioms — enforced on library + example sources (typed linting).
+  // Tests are excluded: they legitimately read state via getState and observe
+  // through watch.
+  {
+    files: ['src/**/*.{ts,tsx}', 'examples/react-basic/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: { effector },
+    rules: {
+      ...effector.configs.recommended.rules,
+      ...effector.configs.react.rules,
+      // Our hooks return units from context, they don't create them.
+      'effector/no-units-spawn-in-render': 'off',
     },
   },
   prettier,
