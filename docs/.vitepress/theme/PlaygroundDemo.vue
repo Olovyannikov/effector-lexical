@@ -139,12 +139,6 @@ onBeforeUnmount(() => {
   opacity: 0.55;
   pointer-events: none;
 }
-/* LineBreakMarkNode → ↵ before the break. */
-.lexical-playground .pg-input.pg-marks .lb-mark::before {
-  content: '↵';
-  color: var(--vp-c-brand-1);
-  opacity: 0.5;
-}
 .lexical-playground .pg-placeholder {
   position: absolute;
   top: 1rem;

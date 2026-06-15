@@ -27,8 +27,11 @@ export function FormattingMarksPlugin() {
   const on = useUnit($marks);
   const editor = useEditorInstance();
   useEffect(() => {
-    const apply = (root: HTMLElement | null) =>
+    // Must return void — Lexical treats a root-listener's return value as a
+    // teardown fn, and classList.toggle returns a boolean.
+    const apply = (root: HTMLElement | null) => {
       root?.classList.toggle('marks-on', on);
+    };
     apply(editor.getRootElement());
     return editor.registerRootListener(apply);
   }, [editor, on]);
@@ -60,14 +63,14 @@ it so the `¶` stays on the same line instead of dropping to the next one.
 }
 ```
 
-## Per-space dots and `↵` (custom nodes)
+## Per-space dots (a custom node)
 
-Showing a `·` for **every space** and a `↵` for soft line breaks needs more than
-CSS: an unformatted text run is a single DOM text node, and `<br>` can't carry
-generated content. The naive fix — a transform that tags whitespace with an
-inline `style`/`format` — **breaks typing**, because Lexical **inherits a text
-node's `format`/`style` onto newly typed text**, so characters typed after a
-marked space inherit the marker and render invisible.
+Showing a `·` for **every space** needs more than CSS: an unformatted text run is
+a single DOM text node, so there's no per-space element to target. The naive fix
+— a transform that tags whitespace with an inline `style`/`format` — **breaks
+typing**, because Lexical **inherits a text node's `format`/`style` onto newly
+typed text**, so characters typed after a marked space inherit the marker and
+render invisible.
 
 The robust route is a **dedicated node type** — the marker lives in the node's
 **type** and a real `class` (neither is inherited on typing), so new text is a
@@ -100,8 +103,8 @@ export class WhitespaceNode extends TextNode {
 
 A transform converts whitespace into `WhitespaceNode` while the toggle is on and
 reverts it when off (a sibling transform on `WhitespaceNode` turns it back into a
-plain `TextNode`, which then merges). A `LineBreakNode` subclass does the same
-for `↵`. CSS keeps the real space (for copy/paste) but draws the dot:
+plain `TextNode`, which then merges). CSS keeps the real space (for copy/paste)
+but draws the dot:
 
 ```css
 .editor.marks-on .ws-mark {
@@ -114,16 +117,17 @@ for `↵`. CSS keeps the real space (for copy/paste) but draws the dot:
   inset: 0;
   text-align: center;
 }
-.editor.marks-on .lb-mark::before {
-  content: '↵';
-}
 ```
 
-The full implementation (both node types, the transforms and a `refresh` helper
-to re-process content on toggle) is in the playground source:
+The full implementation (the node, transforms and a `refresh` helper to
+re-process content on toggle) is in the playground source:
 [`showInvisibles.ts`](https://github.com/Olovyannikov/effector-lexical/blob/main/docs/.vitepress/theme/demo/showInvisibles.ts).
 Try it on the [Playground](/playground) with the ¶ toggle.
 
-::: tip Word model
-**Enter** ends a paragraph (`¶`), **Shift+Enter** inserts a line break (`↵`).
+::: warning No `↵` for line breaks
+A glyph for soft line breaks (`↵`) would require wrapping the `<br>` in an
+element — which **breaks Lexical's caret mapping** (you can't type before the
+break). So line breaks are left as plain `<br>`; paragraph ends use the CSS-only
+`¶` above. **Enter** ends a paragraph (`¶`); **Shift+Enter** inserts a plain line
+break.
 :::
