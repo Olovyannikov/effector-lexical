@@ -8,6 +8,7 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { TreeView } from '@lexical/react/LexicalTreeView';
 import {
   HorizontalRuleNode,
   $createHorizontalRuleNode,
@@ -233,6 +234,10 @@ sample({
   target: importMarkdownFx,
 });
 
+// ── Devtools: editor-state TreeView toggle ──────────────────────────────
+const toggleTree = createEvent();
+const $tree = createStore(false).on(toggleTree, (on) => !on);
+
 // Platform-aware shortcut hints for tooltips.
 const IS_APPLE =
   typeof navigator !== 'undefined' &&
@@ -261,6 +266,7 @@ function Toolbar() {
     onRedo,
     onToggleMarks,
     onToggleMarkdown,
+    onToggleTree,
   ] = useUnit([
     bold,
     italic,
@@ -281,13 +287,15 @@ function Toolbar() {
     redo,
     toggleMarks,
     toggleMarkdown,
+    toggleTree,
   ]);
-  const [active, canUndo, canRedo, marks, mdMode] = useUnit([
+  const [active, canUndo, canRedo, marks, mdMode, tree] = useUnit([
     $active,
     $canUndo,
     $canRedo,
     $marks,
     $markdownMode,
+    $tree,
   ]);
 
   const block = (
@@ -421,6 +429,31 @@ function Toolbar() {
       >
         MD
       </button>
+      <button
+        className={tree ? 'pg-btn pg-on' : 'pg-btn'}
+        title="Editor-state tree (devtools)"
+        onClick={() => onToggleTree()}
+      >
+        ⌗
+      </button>
+    </div>
+  );
+}
+
+// Devtools: Lexical's editor-state inspector with time travel.
+function TreeViewPanel() {
+  const lexicalEditor = useEditorInstance();
+  return (
+    <div className="pg-tree">
+      <TreeView
+        editor={lexicalEditor}
+        viewClassName="pg-tree-output"
+        treeTypeButtonClassName="pg-tree-btn"
+        timeTravelButtonClassName="pg-tree-btn"
+        timeTravelPanelClassName="pg-tree-tt"
+        timeTravelPanelButtonClassName="pg-tree-btn"
+        timeTravelPanelSliderClassName="pg-tree-slider"
+      />
     </div>
   );
 }
@@ -455,7 +488,7 @@ function FormattingMarksPlugin() {
 }
 
 export function PlaygroundDemo() {
-  const [mdMode, md] = useUnit([$markdownMode, $md]);
+  const [mdMode, md, tree] = useUnit([$markdownMode, $md, $tree]);
   const onEditMarkdown = useUnit(editMarkdown);
   return (
     <EditorProvider model={editor}>
@@ -488,6 +521,7 @@ export function PlaygroundDemo() {
           </div>
         )}
         <Footer />
+        {tree && <TreeViewPanel />}
       </div>
     </EditorProvider>
   );

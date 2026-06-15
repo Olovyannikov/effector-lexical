@@ -159,6 +159,42 @@ onBeforeUnmount(() => {
   color: var(--vp-c-text-2);
   border-top: 1px solid var(--vp-c-divider);
 }
+.lexical-playground .pg-tree {
+  border-top: 1px solid var(--vp-c-divider);
+}
+.lexical-playground .pg-tree-output {
+  position: relative;
+  margin: 0;
+  padding: 0.75rem 1.1rem;
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 280px;
+}
+.lexical-playground .pg-tree-btn {
+  position: absolute;
+  top: 6px;
+  background: none;
+  border: 0;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  font-size: 10px;
+}
+.lexical-playground .pg-tree-btn:first-of-type {
+  right: 84px;
+}
+.lexical-playground .pg-tree-tt {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem 1.1rem;
+}
+.lexical-playground .pg-tree-slider {
+  flex: 1;
+}
 
 /* editor content theme */
 .lexical-playground .pg-h1 {
