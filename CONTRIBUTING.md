@@ -22,6 +22,8 @@ via lefthook.
 | Lint          | `pnpm lint`                              |
 | Format        | `pnpm format`                            |
 | Docs (local)  | `pnpm docs:dev`                          |
+| API reference | `pnpm docs:api` (typedoc → `typedoc/`)   |
+| Bundle size   | `pnpm size` (size-limit budgets)         |
 | Example app   | `pnpm --filter @example/react-basic dev` |
 
 ## Git hooks

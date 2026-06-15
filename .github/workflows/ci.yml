@@ -27,3 +27,4 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - run: pnpm build
       - run: pnpm check:exports
+      - run: pnpm size

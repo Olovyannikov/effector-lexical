@@ -1,0 +1,32 @@
+[
+  {
+    "name": "effector-lexical (core)",
+    "path": "dist/index.js",
+    "limit": "2 kB",
+    "ignore": ["effector", "lexical"]
+  },
+  {
+    "name": "effector-lexical/react",
+    "path": "dist/react/index.js",
+    "limit": "1 kB",
+    "ignore": [
+      "effector",
+      "lexical",
+      "react",
+      "react/jsx-runtime",
+      "@lexical/react"
+    ]
+  },
+  {
+    "name": "effector-lexical/html",
+    "path": "dist/html/index.js",
+    "limit": "1 kB",
+    "ignore": ["effector", "lexical", "@lexical/html"]
+  },
+  {
+    "name": "effector-lexical/markdown",
+    "path": "dist/markdown/index.js",
+    "limit": "2 kB",
+    "ignore": ["effector", "lexical", "@lexical/markdown", "@lexical/clipboard"]
+  }
+]
