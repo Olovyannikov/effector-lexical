@@ -99,75 +99,61 @@ nodes the transformers need (`HeadingNode`, `ListNode`, `QuoteNode`, `CodeNode`,
 ## Paste Markdown → convert at the caret
 
 The shortcut plugin only reacts to typing, and `$convertFromMarkdownString`
-replaces the **whole** document — so to convert _pasted_ Markdown in place,
-intercept `PASTE_COMMAND`, build the nodes in a throwaway editor, and insert them
-at the selection with `@lexical/clipboard`:
+replaces the **whole** document. To convert _pasted_ Markdown **in place**, use
+`registerMarkdownPaste` — it intercepts `PASTE_COMMAND`, and when the clipboard
+text passes the `match` heuristic it builds nodes in a throwaway editor and
+inserts them at the selection:
 
 ```ts
-import {
-  $generateJSONFromSelectedNodes,
-  $generateNodesFromSerializedNodes,
-  $insertGeneratedNodes,
-} from '@lexical/clipboard';
-import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
-import {
-  createEditor,
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  PASTE_COMMAND,
-  COMMAND_PRIORITY_HIGH,
-} from 'lexical';
+import { registerMarkdownPaste } from 'effector-lexical/markdown';
 
-const toNodesJSON = (md: string) => {
-  const temp = createEditor({
-    nodes: NODES,
-    onError: (e) => {
-      throw e;
-    },
-  });
-  let nodes = [];
-  temp.update(
-    () => {
-      $convertFromMarkdownString(md, TRANSFORMERS);
-      const root = $getRoot();
-      nodes = $generateJSONFromSelectedNodes(
-        temp,
-        root.select(0, root.getChildrenSize()),
-      ).nodes;
-    },
-    { discrete: true },
-  );
-  return nodes;
-};
-
-editor.editor.registerCommand(
-  PASTE_COMMAND,
-  (event) => {
-    if (!(event instanceof ClipboardEvent)) return false;
-    const text = event.clipboardData?.getData('text/plain') ?? '';
-    if (!looksLikeMarkdown(text)) return false; // let plain paste run
-    event.preventDefault();
-    const serialized = toNodesJSON(text);
-    editor.editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-      $insertGeneratedNodes(
-        editor.editor,
-        $generateNodesFromSerializedNodes(serialized),
-        selection,
-      );
-    });
-    return true;
-  },
-  COMMAND_PRIORITY_HIGH,
-);
+const stop = registerMarkdownPaste(editor, {
+  transformers: MD_TRANSFORMERS, // same list as shortcuts / import / export
+  // match: (text) => text.includes('#'), // optional; defaults to a Markdown heuristic
+});
+// later: stop()
 ```
 
-The throwaway editor must register the **same nodes** as the real one.
-`$generateJSONFromSelectedNodes` serializes nodes **with their children** (a bare
-`node.exportJSON()` does not), and `$insertGeneratedNodes` is what Lexical's own
-rich paste uses — so a single block merges into the current block and multiple
-blocks insert as siblings, just like native paste. Gate it behind a
-"looks like Markdown" check so ordinary text stays plain. Live in the
+It needs the optional `@lexical/clipboard` peer (loaded lazily, so importing
+`effector-lexical/markdown` for export/import only doesn't require it). The
+helper derives the throwaway editor's nodes from the transformers'
+`dependencies`, so heading/list/quote/code/link all convert. A single block
+merges into the current block and multiple blocks insert as siblings, just like
+native paste; plain (non-Markdown) text stays plain. Tweak detection with
+`match`, or reuse the exported `markdownLooksLike`. Live in the
 [Playground](/playground).
+
+## Nodes the transformers cover (and `---` rules)
+
+The default `TRANSFORMERS` handle headings, lists, quotes, code, links and
+inline `**bold**`/`*italic*`/`` `code` ``. They **don't** include a
+horizontal-rule transformer — add one for `---` / `***` / `___`:
+
+```ts
+import { type ElementTransformer } from '@lexical/markdown';
+import {
+  HorizontalRuleNode,
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+} from './HorizontalRuleNode'; // your node (or @lexical's)
+
+const HR: ElementTransformer = {
+  dependencies: [HorizontalRuleNode],
+  export: (node) => ($isHorizontalRuleNode(node) ? '***' : null),
+  regExp: /^(-{3,}|\*{3,}|_{3,})\s*$/,
+  replace: (parentNode, _c, _m, isImport) => {
+    const line = $createHorizontalRuleNode();
+    isImport || parentNode.getNextSibling()
+      ? parentNode.replace(line)
+      : parentNode.insertBefore(line);
+    line.selectNext();
+  },
+  type: 'element',
+};
+
+const MD_TRANSFORMERS = [HR, ...TRANSFORMERS];
+```
+
+Use **one** `MD_TRANSFORMERS` list for the shortcut plugin, `createMarkdownApi`
+and `registerMarkdownPaste` so typing, import/export and paste stay consistent —
+and register the nodes they depend on (here `HorizontalRuleNode`).

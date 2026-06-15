@@ -29,6 +29,9 @@ importers:
       '@lexical/code':
         specifier: ^0.45.0
         version: 0.45.0
+      '@lexical/eslint-plugin':
+        specifier: ^0.45.0
+        version: 0.45.0(eslint@9.39.4(jiti@2.6.1))
       '@lexical/html':
         specifier: ^0.45.0
         version: 0.45.0
@@ -970,6 +973,11 @@ packages:
 
   '@lexical/dragon@0.45.0':
     resolution: {integrity: sha512-34k2/QuM8A9WVqVCtNGx1ySBWXxMVKejKH3VBWnXEb1NdrDa/N8jLpu0gOCLcrrDjMdUzs9uVgW0D4FRf1Lixg==}
+
+  '@lexical/eslint-plugin@0.45.0':
+    resolution: {integrity: sha512-mkMGetydI5H3jWs9DT4owkRpDuWLKqwLae72BwnTRZjr7kPo9gpd+uepG9HMcRniyytc0mPkl5CEjwC/e5TUOw==}
+    peerDependencies:
+      eslint: '>=7.31.0'
 
   '@lexical/extension@0.45.0':
     resolution: {integrity: sha512-oJs1Zvrsqh32zZmeCkTQi7R2WoVIvaQE265JFZ/VczWlsWRdkkWQbGZ6iOlBZ3AmtiNgHoBeB0gZSoRQtWEQyA==}
@@ -4228,6 +4236,10 @@ snapshots:
     dependencies:
       '@lexical/extension': 0.45.0
       lexical: 0.45.0
+
+  '@lexical/eslint-plugin@0.45.0(eslint@9.39.4(jiti@2.6.1))':
+    dependencies:
+      eslint: 9.39.4(jiti@2.6.1)
 
   '@lexical/extension@0.45.0':
     dependencies:
