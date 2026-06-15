@@ -46,6 +46,8 @@ export default defineConfig({
               { text: 'What & why', link: '/guide/getting-started' },
               { text: 'Installation', link: '/guide/installation' },
               { text: 'Quick start', link: '/guide/quick-start' },
+              { text: 'Output formats', link: '/guide/formats' },
+              { text: 'Working with LLMs', link: '/guide/llms' },
             ],
           },
           {
@@ -103,6 +105,8 @@ export default defineConfig({
               { text: 'Что и зачем', link: '/ru/guide/getting-started' },
               { text: 'Установка', link: '/ru/guide/installation' },
               { text: 'Быстрый старт', link: '/ru/guide/quick-start' },
+              { text: 'Форматы вывода', link: '/ru/guide/formats' },
+              { text: 'Работа с LLM', link: '/ru/guide/llms' },
             ],
           },
           {
