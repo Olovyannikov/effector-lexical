@@ -51,3 +51,45 @@ body {
   color: #666;
   font-size: 0.875rem;
 }
+
+/* Devtools: TreeView (editor-state inspector) */
+.tree-view {
+  margin-top: 1rem;
+}
+.tree-view-output {
+  position: relative;
+  display: block;
+  background: #222;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.4;
+}
+.debug-treetype-button,
+.debug-timetravel-button,
+.debug-timetravel-panel-button {
+  position: absolute;
+  top: 8px;
+  background: none;
+  color: #888;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+}
+.debug-treetype-button {
+  right: 80px;
+}
+.debug-timetravel-button {
+  right: 12px;
+}
+.debug-timetravel-panel {
+  display: flex;
+  margin: 0.5rem 0;
+}
+.debug-timetravel-panel-slider {
+  flex: 1;
+}

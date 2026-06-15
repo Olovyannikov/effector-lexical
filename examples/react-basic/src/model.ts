@@ -1,3 +1,4 @@
+import { createEvent, createStore } from 'effector';
 import { createEditorModel } from 'effector-lexical';
 import {
   FORMAT_TEXT_COMMAND,
@@ -31,3 +32,7 @@ export const redo = editor.command<void>(REDO_COMMAND).dispatch;
 
 // $text and $json are plain effector stores — use them anywhere.
 export const $charCount = editor.$text.map((text) => text.length);
+
+// Devtools: toggle the editor-state TreeView (Lexical's built-in inspector).
+export const toggleDebug = createEvent();
+export const $debug = createStore(false).on(toggleDebug, (on) => !on);

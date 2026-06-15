@@ -117,3 +117,27 @@ await editor.updateFx(() => {
 
 editor.destroy();
 ```
+
+## Devtools
+
+The [`react-basic`](https://github.com/Olovyannikov/effector-lexical/tree/main/examples/react-basic)
+example has a **Show tree** button that mounts Lexical's `TreeView` (the
+editor-state inspector with time travel), gated by an effector store:
+
+```tsx
+import { TreeView } from '@lexical/react/LexicalTreeView';
+import { useEditorInstance } from 'effector-lexical/react';
+
+function TreeViewPlugin() {
+  return (
+    <TreeView editor={useEditorInstance()} viewClassName="tree-view-output" />
+  );
+}
+
+// model.ts
+export const toggleDebug = createEvent();
+export const $debug = createStore(false).on(toggleDebug, (on) => !on);
+```
+
+For ad-hoc debugging of any page, the official **Lexical DevTools** browser
+extension inspects live editors without any code.
