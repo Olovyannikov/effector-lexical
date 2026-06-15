@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
-import { createStore, createEvent, sample, attach } from 'effector';
+import {
+  createStore,
+  createEvent,
+  createEffect,
+  sample,
+  attach,
+} from 'effector';
 import { useUnit } from 'effector-react';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -218,13 +224,18 @@ const $md = createStore('')
   .on(editMarkdown, (_, value) => value)
   .on(exportMarkdownFx.doneData, (_, value) => value);
 
-// Entering source mode → dump current content to Markdown.
-sample({
+// Entering source mode → drop formatting marks and revert the marker nodes
+// (WhitespaceNode/LineBreakMarkNode) BEFORE exporting, so Markdown is built from
+// clean standard nodes.
+const enteredMarkdown = sample({
   clock: toggleMarkdown,
   source: $markdownMode,
   filter: (on) => on,
-  target: exportMarkdownFx,
 });
+const revertMarksFx = createEffect(() => refreshInvisibles(editor.editor));
+$marks.reset(enteredMarkdown);
+sample({ clock: enteredMarkdown, target: revertMarksFx });
+sample({ clock: revertMarksFx.done, target: exportMarkdownFx });
 // Leaving source mode → apply the edited Markdown back to the editor.
 sample({
   clock: toggleMarkdown,
