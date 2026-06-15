@@ -123,9 +123,27 @@ Transform превращает пробелы в `WhitespaceNode`, пока то
 [`showInvisibles.ts`](https://github.com/Olovyannikov/effector-lexical/blob/main/docs/.vitepress/theme/demo/showInvisibles.ts).
 Попробуйте на [Playground](/playground) тоглом ¶.
 
-::: warning Без `↵` для переносов
-Глиф для мягких переносов (`↵`) потребовал бы обернуть `<br>` в элемент — а это
-**ломает маппинг каретки** в Lexical (нельзя печатать перед переносом). Поэтому
-переносы остаются обычным `<br>`; концы абзацев — это CSS-only `¶` выше.
-**Enter** завершает абзац (`¶`); **Shift+Enter** вставляет обычный перенос.
-:::
+## Переносы (`↵`) и пустые строки
+
+Два CSS-only приёма — оба caret-safe (без изменений DOM/нод):
+
+```css
+/* ↵ для мягкого переноса — помечаем текстовый span ПЕРЕД <br>, а не сам <br>
+   (br::after ненадёжен; обёртка <br> ломает каретку). */
+.editor.marks-on span[data-lexical-text]:has(+ br)::after {
+  content: '↵';
+}
+
+/* Пустые блоки рендерят одиночный <br>, который браузеры не дают скрыть —
+   накладываем ¶ на ту же строку absolute-псевдоэлементом, а не добавляем строку. */
+.editor.marks-on :where(p, h1, h2, blockquote, li):has(> br:only-child) {
+  position: relative;
+}
+.editor.marks-on :where(p, h1, h2, blockquote, li):has(> br:only-child)::after {
+  content: '¶';
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+```
+
+**Enter** завершает абзац (`¶`); **Shift+Enter** вставляет перенос строки (`↵`).

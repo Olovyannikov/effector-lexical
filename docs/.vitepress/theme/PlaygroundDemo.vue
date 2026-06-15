@@ -148,6 +148,17 @@ onBeforeUnmount(() => {
   opacity: 0.55;
   pointer-events: none;
 }
+/* Soft line break (↵): mark the text span right BEFORE the <br>, not the <br>
+   itself. A pseudo on a normal span renders reliably and never touches the
+   caret (unlike br::after or wrapping the <br>). */
+.lexical-playground
+  .pg-input.pg-marks
+  span[data-lexical-text]:has(+ br)::after {
+  content: '↵';
+  color: var(--vp-c-brand-1);
+  opacity: 0.5;
+  padding-left: 1px;
+}
 .lexical-playground .pg-placeholder {
   position: absolute;
   top: 1rem;

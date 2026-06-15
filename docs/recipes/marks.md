@@ -124,10 +124,27 @@ re-process content on toggle) is in the playground source:
 [`showInvisibles.ts`](https://github.com/Olovyannikov/effector-lexical/blob/main/docs/.vitepress/theme/demo/showInvisibles.ts).
 Try it on the [Playground](/playground) with the ¶ toggle.
 
-::: warning No `↵` for line breaks
-A glyph for soft line breaks (`↵`) would require wrapping the `<br>` in an
-element — which **breaks Lexical's caret mapping** (you can't type before the
-break). So line breaks are left as plain `<br>`; paragraph ends use the CSS-only
-`¶` above. **Enter** ends a paragraph (`¶`); **Shift+Enter** inserts a plain line
-break.
-:::
+## Line breaks (`↵`) and empty lines
+
+Two CSS-only tricks keep the markers caret-safe (no DOM/node changes):
+
+```css
+/* ↵ for a soft line break — mark the text span BEFORE the <br>, never the <br>
+   itself (br::after is unreliable; wrapping the <br> breaks the caret). */
+.editor.marks-on span[data-lexical-text]:has(+ br)::after {
+  content: '↵';
+}
+
+/* Empty blocks render a lone <br> that browsers refuse to hide, so overlay ¶ on
+   that line with an absolute pseudo instead of adding a line below it. */
+.editor.marks-on :where(p, h1, h2, blockquote, li):has(> br:only-child) {
+  position: relative;
+}
+.editor.marks-on :where(p, h1, h2, blockquote, li):has(> br:only-child)::after {
+  content: '¶';
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+```
+
+**Enter** ends a paragraph (`¶`); **Shift+Enter** inserts a line break (`↵`).
