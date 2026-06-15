@@ -14,6 +14,8 @@ framework-agnostic unless noted; in React, read stores with `useUnit` from
   block type, links under the caret.
 - [**Nodes & content**](./nodes) — react to node mutations, programmatic edits,
   read-only mode, counters, transforms.
+- [**Framework adapters**](./frameworks) — React (`EditorProvider`), Solid
+  (`editorRef`) and Vue (`useEditorRoot`) bindings.
 - [**Scope, SSR & testing**](./scope) — scope-safety notes, forked tests and
   server-side state parsing.
 

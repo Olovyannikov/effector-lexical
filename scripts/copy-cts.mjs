@@ -2,6 +2,13 @@
 // resolves CJS-flavoured types (fixes attw "masquerading as ESM").
 import { copyFileSync } from 'node:fs';
 
-for (const entry of ['index', 'react/index', 'html/index', 'markdown/index']) {
+for (const entry of [
+  'index',
+  'react/index',
+  'html/index',
+  'markdown/index',
+  'solid/index',
+  'vue/index',
+]) {
   copyFileSync(`dist/${entry}.d.ts`, `dist/${entry}.d.cts`);
 }

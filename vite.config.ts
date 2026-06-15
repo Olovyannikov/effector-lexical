@@ -12,6 +12,8 @@ export default defineConfig({
         'react/index': resolve(__dirname, 'src/react/index.ts'),
         'html/index': resolve(__dirname, 'src/html/index.ts'),
         'markdown/index': resolve(__dirname, 'src/markdown/index.ts'),
+        'solid/index': resolve(__dirname, 'src/solid/index.ts'),
+        'vue/index': resolve(__dirname, 'src/vue/index.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) =>
@@ -24,6 +26,8 @@ export default defineConfig({
         'react',
         'react/jsx-runtime',
         'react-dom',
+        'solid-js',
+        'vue',
         /^@lexical\//,
       ],
     },
