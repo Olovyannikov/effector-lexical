@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import effector from 'eslint-plugin-effector';
+import lexical from '@lexical/eslint-plugin';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
@@ -14,6 +15,8 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // Lexical rules-of-lexical: $-prefixed helpers used only in valid contexts.
+  lexical.configs['flat/recommended'],
   {
     rules: {
       '@typescript-eslint/consistent-type-imports': [

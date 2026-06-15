@@ -188,6 +188,14 @@ onBeforeUnmount(() => {
 .lexical-playground .pg-li {
   margin: 0.15rem 0;
 }
+.lexical-playground .pg-input hr {
+  border: 0;
+  border-top: 2px solid var(--vp-c-divider);
+  margin: 0.8rem 0;
+}
+.lexical-playground .pg-input hr.selected {
+  border-top-color: var(--vp-c-brand-1);
+}
 .lexical-playground .pg-link {
   color: var(--vp-c-brand-1);
   text-decoration: underline;

@@ -101,75 +101,62 @@ import { TRANSFORMERS } from '@lexical/markdown';
 ## Вставка Markdown → конвертация по месту курсора
 
 Плагин шорткатов реагирует только на ввод, а `$convertFromMarkdownString`
-заменяет **весь** документ — поэтому чтобы конвертировать _вставленный_ Markdown
-по месту, перехватите `PASTE_COMMAND`, соберите ноды во временном редакторе и
-вставьте их в селекцию через `@lexical/clipboard`:
+заменяет **весь** документ. Чтобы конвертировать _вставленный_ Markdown **по
+месту**, используйте `registerMarkdownPaste` — он перехватывает `PASTE_COMMAND`,
+и если текст из буфера проходит эвристику `match`, собирает ноды во временном
+редакторе и вставляет в селекцию:
 
 ```ts
-import {
-  $generateJSONFromSelectedNodes,
-  $generateNodesFromSerializedNodes,
-  $insertGeneratedNodes,
-} from '@lexical/clipboard';
-import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
-import {
-  createEditor,
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  PASTE_COMMAND,
-  COMMAND_PRIORITY_HIGH,
-} from 'lexical';
+import { registerMarkdownPaste } from 'effector-lexical/markdown';
 
-const toNodesJSON = (md: string) => {
-  const temp = createEditor({
-    nodes: NODES,
-    onError: (e) => {
-      throw e;
-    },
-  });
-  let nodes = [];
-  temp.update(
-    () => {
-      $convertFromMarkdownString(md, TRANSFORMERS);
-      const root = $getRoot();
-      nodes = $generateJSONFromSelectedNodes(
-        temp,
-        root.select(0, root.getChildrenSize()),
-      ).nodes;
-    },
-    { discrete: true },
-  );
-  return nodes;
-};
-
-editor.editor.registerCommand(
-  PASTE_COMMAND,
-  (event) => {
-    if (!(event instanceof ClipboardEvent)) return false;
-    const text = event.clipboardData?.getData('text/plain') ?? '';
-    if (!looksLikeMarkdown(text)) return false; // обычная вставка остаётся как есть
-    event.preventDefault();
-    const serialized = toNodesJSON(text);
-    editor.editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-      $insertGeneratedNodes(
-        editor.editor,
-        $generateNodesFromSerializedNodes(serialized),
-        selection,
-      );
-    });
-    return true;
-  },
-  COMMAND_PRIORITY_HIGH,
-);
+const stop = registerMarkdownPaste(editor, {
+  transformers: MD_TRANSFORMERS, // тот же список, что и шорткаты / import / export
+  // match: (text) => text.includes('#'), // опционально; по умолчанию — эвристика Markdown
+});
+// потом: stop()
 ```
 
-Временный редактор должен регистрировать **те же ноды**, что и основной.
-`$generateJSONFromSelectedNodes` сериализует ноды **вместе с детьми** (голый
-`node.exportJSON()` — нет), а `$insertGeneratedNodes` — это то, что использует
-родной rich-paste Lexical: один блок сливается с текущим, несколько вставляются
-как соседние, как при обычной вставке. Закройте это проверкой «похоже на
-Markdown», чтобы обычный текст оставался текстом. Вживую — в
+Нужен опциональный peer `@lexical/clipboard` (грузится лениво, поэтому импорт
+`effector-lexical/markdown` только ради export/import его не требует). Хелпер
+собирает ноды для временного редактора из `dependencies` трансформеров, так что
+заголовки/списки/цитаты/код/ссылки конвертируются. Один блок сливается с
+текущим, несколько вставляются как соседние — как при обычной вставке; обычный
+(не-Markdown) текст остаётся текстом. Настройте детект через `match` или
+переиспользуйте экспортируемый `markdownLooksLike`. Вживую — в
 [Playground](/playground).
+
+## Какие ноды покрыты трансформерами (и `---`)
+
+Дефолтные `TRANSFORMERS` покрывают заголовки, списки, цитаты, код, ссылки и
+инлайн `**bold**`/`*italic*`/`` `code` ``. Горизонтальной черты в них **нет** —
+добавьте transformer для `---` / `***` / `___`:
+
+```ts
+import { type ElementTransformer } from '@lexical/markdown';
+import {
+  HorizontalRuleNode,
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+} from './HorizontalRuleNode'; // ваша нода (или из @lexical)
+
+const HR: ElementTransformer = {
+  dependencies: [HorizontalRuleNode],
+  export: (node) => ($isHorizontalRuleNode(node) ? '***' : null),
+  regExp: /^(-{3,}|\*{3,}|_{3,})\s*$/,
+  replace: (parentNode, _c, _m, isImport) => {
+    const line = $createHorizontalRuleNode();
+    isImport || parentNode.getNextSibling()
+      ? parentNode.replace(line)
+      : parentNode.insertBefore(line);
+    line.selectNext();
+  },
+  type: 'element',
+};
+
+const MD_TRANSFORMERS = [HR, ...TRANSFORMERS];
+```
+
+Используйте **один** список `MD_TRANSFORMERS` для плагина шорткатов,
+`createMarkdownApi` и `registerMarkdownPaste`, чтобы ввод, import/export и вставка
+были согласованы — и зарегистрируйте ноды, от которых они зависят (здесь
+`HorizontalRuleNode`).
