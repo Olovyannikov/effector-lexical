@@ -488,8 +488,11 @@ function FormattingMarksPlugin() {
   const on = useUnit($marks);
   const editor = useEditorInstance();
   useEffect(() => {
-    const apply = (root: HTMLElement | null) =>
+    // Must return void: Lexical treats a root-listener's return value as a
+    // teardown fn, and classList.toggle returns a boolean.
+    const apply = (root: HTMLElement | null) => {
       root?.classList.toggle('pg-marks', on);
+    };
     apply(editor.getRootElement());
     return editor.registerRootListener(apply);
   }, [editor, on]);
