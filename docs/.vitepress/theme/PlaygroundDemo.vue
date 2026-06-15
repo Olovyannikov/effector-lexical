@@ -139,6 +139,14 @@ onBeforeUnmount(() => {
   opacity: 0.55;
   pointer-events: none;
 }
+/* Soft line breaks: a best-effort ↵ via CSS only (no DOM change → caret-safe).
+   Not every browser renders generated content on <br>. The empty-block <br> is
+   hidden above, so this only marks real Shift+Enter breaks. */
+.lexical-playground .pg-input.pg-marks br::after {
+  content: '↵';
+  color: var(--vp-c-brand-1);
+  opacity: 0.5;
+}
 .lexical-playground .pg-placeholder {
   position: absolute;
   top: 1rem;
