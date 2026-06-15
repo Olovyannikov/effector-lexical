@@ -278,6 +278,36 @@ describe('createEditorModel', () => {
     });
   });
 
+  it('reflects the current selection in $selection', async () => {
+    const model = createEditorModel({ namespace: 'test', onError });
+    expect(model.$selection.getState()).toBeNull();
+
+    await model.updateFx(writeText('hello world'));
+    await model.updateFx(() => {
+      const text = $getRoot().getFirstChild()!.getFirstChild()!;
+      (text as TextNode).select(0, 5);
+    });
+
+    const selection = model.$selection.getState();
+    expect(selection).not.toBeNull();
+    expect(selection!.isCollapsed).toBe(false);
+    expect(selection!.text).toBe('hello');
+    model.destroy();
+  });
+
+  it('registers a node transform tracked by destroy', async () => {
+    const model = createEditorModel({ namespace: 'test', onError });
+    const stop = model.nodeTransform(TextNode, (node) => {
+      const text = node.getTextContent();
+      if (text !== text.toUpperCase()) node.setTextContent(text.toUpperCase());
+    });
+    expect(typeof stop).toBe('function');
+
+    await model.updateFx(writeText('abc'));
+    expect(model.$text.getState()).toBe('ABC');
+    model.destroy();
+  });
+
   describe('destroy', () => {
     it('stops emitting events after teardown', async () => {
       const model = createEditorModel({ namespace: 'test', onError });

@@ -54,6 +54,7 @@ theme, onError, editable, editorState, …), forwarded verbatim.
 | `$text`           | `Store<string>`                                     | `textChanged`                 |
 | `$editable`       | `Store<boolean>`                                    | `editableChanged`             |
 | `$json`           | `Store<SerializedEditorState>`                      | `$state.map(toJSON)`          |
+| `$selection`      | `Store<SelectionSnapshot \| null>`                  | snapshot from `updated`       |
 | `updateFx`        | `Effect<UpdateParams, void>`                        | `editor.update`               |
 | `setStateFx`      | `Effect<EditorState \| Serialized \| string, void>` | `editor.setEditorState`       |
 | `setEditableFx`   | `Effect<boolean, void>`                             | `editor.setEditable`          |
@@ -64,6 +65,7 @@ theme, onError, editable, editorState, …), forwarded verbatim.
 | `detachScope`     | `() => void`                                        | clears bound scope            |
 | `command`         | `(cmd, priority?) => CommandModel`                  | `registerCommand`/`dispatch`  |
 | `mutations`       | `(NodeClass, options?) => Event`                    | `registerMutationListener`    |
+| `nodeTransform`   | `(NodeClass, fn) => () => void`                     | `registerNodeTransform`       |
 | `history`         | `() => HistoryModel`                                | CAN_UNDO/CAN_REDO + commands  |
 | `destroy`         | `() => void`                                        | all unsubscribers             |
 

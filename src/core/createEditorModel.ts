@@ -6,6 +6,8 @@ import {
   UNDO_COMMAND,
   REDO_COMMAND,
   $getRoot,
+  $getSelection,
+  $isRangeSelection,
   type CommandListenerPriority,
   type EditorState,
   type Klass,
@@ -33,6 +35,7 @@ import type {
   HistoryModel,
   MutationPayload,
   RootPayload,
+  SelectionSnapshot,
   UpdateParams,
   UpdatePayload,
 } from './types';
@@ -63,6 +66,8 @@ export interface EditorModel {
   readonly $text: Store<string>;
   readonly $editable: Store<boolean>;
   readonly $json: Store<SerializedEditorState>;
+  /** A snapshot of the current selection (`null` when not a range selection). */
+  readonly $selection: Store<SelectionSnapshot | null>;
 
   // ── Outgoing effects (effector → Lexical) ─────────────────────────────
   /** Runs `editor.update`; resolves after reconciliation. */
@@ -100,6 +105,14 @@ export interface EditorModel {
     node: Klass<T>,
     options?: MutationListenerOptions,
   ): Event<MutationPayload>;
+  /**
+   * Registers a node transform (runs inside updates to normalize nodes) and
+   * tracks it for `destroy()`. Returns the unregister function.
+   */
+  nodeTransform<T extends LexicalNode>(
+    node: Klass<T>,
+    transform: (node: T) => void,
+  ): () => void;
   /** Unregisters every Lexical listener created by this model. */
   destroy(): void;
 }
@@ -162,6 +175,22 @@ export function createEditorModel(
   );
 
   const $json = $state.map((state) => state.toJSON());
+
+  const $selection = createStore<SelectionSnapshot | null>(null);
+  sample({
+    clock: updated,
+    fn: ({ editorState }): SelectionSnapshot | null =>
+      editorState.read(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return null;
+        return {
+          isCollapsed: selection.isCollapsed(),
+          isBackward: selection.isBackward(),
+          text: selection.getTextContent(),
+        };
+      }),
+    target: $selection,
+  });
 
   // ── Outgoing effects ──────────────────────────────────────────────────
   const updateFx = createEffect<UpdateParams, void>(
@@ -262,6 +291,15 @@ export function createEditorModel(
     return event;
   };
 
+  const nodeTransform = <T extends LexicalNode>(
+    node: Klass<T>,
+    transform: (node: T) => void,
+  ): (() => void) => {
+    const unregister = editor.registerNodeTransform(node, transform);
+    teardown.push(unregister);
+    return unregister;
+  };
+
   const history = (): HistoryModel => {
     const canUndoChanged = createEvent<boolean>();
     const canRedoChanged = createEvent<boolean>();
@@ -311,6 +349,7 @@ export function createEditorModel(
     $text,
     $editable,
     $json,
+    $selection,
     updateFx,
     setStateFx,
     setEditableFx,
@@ -321,6 +360,7 @@ export function createEditorModel(
     detachScope,
     command,
     mutations,
+    nodeTransform,
     history,
     destroy,
   };

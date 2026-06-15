@@ -39,12 +39,13 @@ const editor = createEditorModel({
 
 ### Сторы (производное состояние)
 
-| Стор        | Тип                            | Примечания                                     |
-| ----------- | ------------------------------ | ---------------------------------------------- |
-| `$state`    | `Store<EditorState>`           | Последнее зафиксированное состояние редактора. |
-| `$text`     | `Store<string>`                | Содержимое в виде простого текста.             |
-| `$editable` | `Store<boolean>`               | Режим редактирования.                          |
-| `$json`     | `Store<SerializedEditorState>` | `$state.map((s) => s.toJSON())`.               |
+| Стор         | Тип                                | Примечания                                                                                  |
+| ------------ | ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| `$state`     | `Store<EditorState>`               | Последнее зафиксированное состояние редактора.                                              |
+| `$text`      | `Store<string>`                    | Содержимое в виде простого текста.                                                          |
+| `$editable`  | `Store<boolean>`                   | Режим редактирования.                                                                       |
+| `$json`      | `Store<SerializedEditorState>`     | `$state.map((s) => s.toJSON())`.                                                            |
+| `$selection` | `Store<SelectionSnapshot \| null>` | Снимок `{ isCollapsed, isBackward, text }`; `null`, когда выделение не является диапазоном. |
 
 ### Эффекты (effector → Lexical)
 
@@ -155,6 +156,18 @@ bold.triggered.watch(console.log); // observe
 ```ts
 editor.mutations(LinkNode).watch(({ mutatedNodes }) => {
   for (const [key, kind] of mutatedNodes) console.log(key, kind);
+});
+```
+
+#### `nodeTransform(NodeClass, transform)`
+
+Регистрирует [преобразование узла](https://lexical.dev/docs/concepts/transforms) (выполняется
+внутри обновлений для нормализации узлов) и отслеживает его для `destroy()`. Возвращает
+функцию отмены регистрации.
+
+```ts
+editor.nodeTransform(TextNode, (node) => {
+  // например, схлопнуть двойные пробелы, автоссылки и т. д.
 });
 ```
 

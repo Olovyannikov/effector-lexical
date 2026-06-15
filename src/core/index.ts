@@ -6,6 +6,7 @@ export type {
   HistoryModel,
   MutationPayload,
   RootPayload,
+  SelectionSnapshot,
   UpdateParams,
   UpdatePayload,
   UpdateWriter,

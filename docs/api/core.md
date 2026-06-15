@@ -39,12 +39,13 @@ const editor = createEditorModel({
 
 ### Stores (derived state)
 
-| Store       | Type                           | Notes                            |
-| ----------- | ------------------------------ | -------------------------------- |
-| `$state`    | `Store<EditorState>`           | Latest committed editor state.   |
-| `$text`     | `Store<string>`                | Plain-text content.              |
-| `$editable` | `Store<boolean>`               | Editable mode.                   |
-| `$json`     | `Store<SerializedEditorState>` | `$state.map((s) => s.toJSON())`. |
+| Store        | Type                               | Notes                                                         |
+| ------------ | ---------------------------------- | ------------------------------------------------------------- |
+| `$state`     | `Store<EditorState>`               | Latest committed editor state.                                |
+| `$text`      | `Store<string>`                    | Plain-text content.                                           |
+| `$editable`  | `Store<boolean>`                   | Editable mode.                                                |
+| `$json`      | `Store<SerializedEditorState>`     | `$state.map((s) => s.toJSON())`.                              |
+| `$selection` | `Store<SelectionSnapshot \| null>` | `{ isCollapsed, isBackward, text }`; `null` when not a range. |
 
 ### Effects (effector → Lexical)
 
@@ -155,6 +156,18 @@ mirrors Lexical's `MutationListenerOptions`.
 ```ts
 editor.mutations(LinkNode).watch(({ mutatedNodes }) => {
   for (const [key, kind] of mutatedNodes) console.log(key, kind);
+});
+```
+
+#### `nodeTransform(NodeClass, transform)`
+
+Registers a [node transform](https://lexical.dev/docs/concepts/transforms) (runs
+inside updates to normalize nodes) and tracks it for `destroy()`. Returns the
+unregister function.
+
+```ts
+editor.nodeTransform(TextNode, (node) => {
+  // e.g. collapse double spaces, autolink, etc.
 });
 ```
 

@@ -48,6 +48,16 @@ export interface CommandModel<Payload> {
   triggered: Event<Payload>;
 }
 
+/** A plain snapshot of the current range selection (safe to keep in a store). */
+export interface SelectionSnapshot {
+  /** Whether the selection is a caret (no text selected). */
+  isCollapsed: boolean;
+  /** Whether the focus is before the anchor. */
+  isBackward: boolean;
+  /** The selected text content. */
+  text: string;
+}
+
 /** History units returned by `model.history()`. */
 export interface HistoryModel {
   /** Whether an undo is currently available. */
