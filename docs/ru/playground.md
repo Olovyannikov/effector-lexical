@@ -14,7 +14,9 @@
   (см. [HTML и Markdown](./recipes/serialization));
 - **live-шорткаты Markdown** — наберите `# `, `- `, `> `, ` ``` ` или
   `**bold**`, и форматирование применится прямо при вводе (плагин Lexical
-  `MarkdownShortcutPlugin`).
+  `MarkdownShortcutPlugin`);
+- **вставка Markdown** — вставьте текст, похожий на Markdown, и он
+  сконвертируется в ноды по месту курсора (`PASTE_COMMAND` + `@lexical/clipboard`).
 
 <LexicalPlayground />
 

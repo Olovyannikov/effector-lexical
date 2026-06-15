@@ -13,7 +13,9 @@ effector:
   dumps the content on the way in, `importMarkdownFx` applies your edits on the
   way back (see [HTML & Markdown](./recipes/serialization));
 - **live Markdown shortcuts** — type `# `, `- `, `> `, ` ``` ` or `**bold**`
-  and it formats as you type (Lexical's `MarkdownShortcutPlugin`).
+  and it formats as you type (Lexical's `MarkdownShortcutPlugin`);
+- **paste Markdown** — paste text that looks like Markdown and it converts into
+  nodes at the caret (`PASTE_COMMAND` + `@lexical/clipboard`).
 
 <LexicalPlayground />
 

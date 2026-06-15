@@ -23,6 +23,9 @@ importers:
       '@eslint/js':
         specifier: ^9.17.0
         version: 9.39.4
+      '@lexical/clipboard':
+        specifier: ^0.45.0
+        version: 0.45.0
       '@lexical/code':
         specifier: ^0.45.0
         version: 0.45.0

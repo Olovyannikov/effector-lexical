@@ -8,7 +8,7 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { TRANSFORMERS } from '@lexical/markdown';
+import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
 import {
   HeadingNode,
   QuoteNode,
@@ -31,15 +31,25 @@ import {
 } from '@lexical/code';
 import { $setBlocksType } from '@lexical/selection';
 import {
+  createEditor,
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
+  PASTE_COMMAND,
+  COMMAND_PRIORITY_HIGH,
   type ElementFormatType,
   type ElementNode,
+  type SerializedLexicalNode,
   type TextFormatType,
 } from 'lexical';
+import {
+  $generateJSONFromSelectedNodes,
+  $generateNodesFromSerializedNodes,
+  $insertGeneratedNodes,
+} from '@lexical/clipboard';
 
 import { createEditorModel } from '../../../../src';
 import { EditorProvider, useEditorInstance } from '../../../../src/react';
@@ -50,18 +60,20 @@ import {
   refreshInvisibles,
 } from './showInvisibles';
 
+const NODES = [
+  HeadingNode,
+  QuoteNode,
+  ListNode,
+  ListItemNode,
+  LinkNode,
+  CodeNode,
+  CodeHighlightNode,
+  ...SHOW_INVISIBLES_NODES,
+];
+
 const editor = createEditorModel({
   namespace: 'playground',
-  nodes: [
-    HeadingNode,
-    QuoteNode,
-    ListNode,
-    ListItemNode,
-    LinkNode,
-    CodeNode,
-    CodeHighlightNode,
-    ...SHOW_INVISIBLES_NODES,
-  ],
+  nodes: NODES,
   theme: {
     heading: { h1: 'pg-h1', h2: 'pg-h2' },
     quote: 'pg-quote',
@@ -170,6 +182,58 @@ const $marks = createStore(false).on(toggleMarks, (on) => !on);
 
 // Convert whitespace / line breaks into marker nodes while marks are on.
 registerShowInvisibles(editor.editor, () => $marks.getState());
+
+// ── Paste Markdown → convert to nodes at the caret ──────────────────────
+// Heuristic: only convert when the pasted text actually looks like Markdown,
+// so plain-text paste stays plain.
+const MARKDOWN_HINT =
+  /(^|\n)\s{0,3}(#{1,6} |[-*+] |\d+\. |> |```)|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)|`[^`]+`/;
+
+const markdownToNodesJSON = (md: string): SerializedLexicalNode[] => {
+  // Build in a throwaway editor (convert replaces a whole root), then hand the
+  // serialized nodes to the real editor to insert at the selection.
+  const temp = createEditor({
+    nodes: NODES,
+    onError: (e) => {
+      throw e;
+    },
+  });
+  let nodes: SerializedLexicalNode[] = [];
+  temp.update(
+    () => {
+      $convertFromMarkdownString(md, TRANSFORMERS);
+      const root = $getRoot();
+      nodes = $generateJSONFromSelectedNodes(
+        temp,
+        root.select(0, root.getChildrenSize()),
+      ).nodes;
+    },
+    { discrete: true },
+  );
+  return nodes;
+};
+
+editor.editor.registerCommand(
+  PASTE_COMMAND,
+  (event) => {
+    if (!(event instanceof ClipboardEvent)) return false;
+    const text = event.clipboardData?.getData('text/plain') ?? '';
+    if (!text || !MARKDOWN_HINT.test(text)) return false; // let plain paste run
+    event.preventDefault();
+    const serialized = markdownToNodesJSON(text);
+    editor.editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+      $insertGeneratedNodes(
+        editor.editor,
+        $generateNodesFromSerializedNodes(serialized),
+        selection,
+      );
+    });
+    return true;
+  },
+  COMMAND_PRIORITY_HIGH,
+);
 
 // ── Markdown source mode ────────────────────────────────────────────────
 const { exportMarkdownFx, importMarkdownFx } = createMarkdownApi(editor);

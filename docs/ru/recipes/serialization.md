@@ -98,7 +98,78 @@ import { TRANSFORMERS } from '@lexical/markdown';
 нужны трансформерам (`HeadingNode`, `ListNode`, `QuoteNode`, `CodeNode`,
 `LinkNode`, …).
 
-Вставка целого Markdown-документа — другое: плагин шорткатов реагирует только на
-ввод, а `$convertFromMarkdownString` заменяет **весь** документ. Для «вставил
-markdown → сконвертировалось» используйте [тоггл Markdown-исходника](/playground)
-(`importMarkdownFx`), а не вставку по месту.
+## Вставка Markdown → конвертация по месту курсора
+
+Плагин шорткатов реагирует только на ввод, а `$convertFromMarkdownString`
+заменяет **весь** документ — поэтому чтобы конвертировать _вставленный_ Markdown
+по месту, перехватите `PASTE_COMMAND`, соберите ноды во временном редакторе и
+вставьте их в селекцию через `@lexical/clipboard`:
+
+```ts
+import {
+  $generateJSONFromSelectedNodes,
+  $generateNodesFromSerializedNodes,
+  $insertGeneratedNodes,
+} from '@lexical/clipboard';
+import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
+import {
+  createEditor,
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  PASTE_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+} from 'lexical';
+
+const toNodesJSON = (md: string) => {
+  const temp = createEditor({
+    nodes: NODES,
+    onError: (e) => {
+      throw e;
+    },
+  });
+  let nodes = [];
+  temp.update(
+    () => {
+      $convertFromMarkdownString(md, TRANSFORMERS);
+      const root = $getRoot();
+      nodes = $generateJSONFromSelectedNodes(
+        temp,
+        root.select(0, root.getChildrenSize()),
+      ).nodes;
+    },
+    { discrete: true },
+  );
+  return nodes;
+};
+
+editor.editor.registerCommand(
+  PASTE_COMMAND,
+  (event) => {
+    if (!(event instanceof ClipboardEvent)) return false;
+    const text = event.clipboardData?.getData('text/plain') ?? '';
+    if (!looksLikeMarkdown(text)) return false; // обычная вставка остаётся как есть
+    event.preventDefault();
+    const serialized = toNodesJSON(text);
+    editor.editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+      $insertGeneratedNodes(
+        editor.editor,
+        $generateNodesFromSerializedNodes(serialized),
+        selection,
+      );
+    });
+    return true;
+  },
+  COMMAND_PRIORITY_HIGH,
+);
+```
+
+Временный редактор должен регистрировать **те же ноды**, что и основной.
+`$generateJSONFromSelectedNodes` сериализует ноды **вместе с детьми** (голый
+`node.exportJSON()` — нет), а `$insertGeneratedNodes` — это то, что использует
+родной rich-paste Lexical: один блок сливается с текущим, несколько вставляются
+как соседние, как при обычной вставке. Закройте это проверкой «похоже на
+Markdown», чтобы обычный текст оставался текстом. Вживую — в
+[Playground](/playground).
