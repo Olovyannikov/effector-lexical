@@ -109,6 +109,13 @@ onBeforeUnmount(() => {
   > br:only-child {
   display: none;
 }
+/* Soft line breaks (Shift+Enter → LineBreakNode → <br>) get a ↵ marker. */
+.lexical-playground .pg-input.pg-marks br::after {
+  content: '↵';
+  color: var(--vp-c-brand-1);
+  opacity: 0.5;
+  padding-left: 2px;
+}
 /* Experimental: a · for every space (whitespace split into token spans). */
 .lexical-playground .pg-input.pg-marks [style*='--ws'] {
   position: relative;
