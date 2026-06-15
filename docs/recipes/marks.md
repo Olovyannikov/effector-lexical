@@ -60,50 +60,29 @@ it so the `¶` stays on the same line instead of dropping to the next one.
 }
 ```
 
-## On per-space dots and line-break arrows
+## Why per-space dots and `↵` aren't included
 
-Showing a `·` for **every space** (like Word) or a `↵` for soft line breaks is
-**not robustly doable with CSS** in a Lexical editor: an unformatted text run is
-a single DOM text node, so there is no per-space element to target, and a `<br>`
-can't carry generated content. Lexical also owns the DOM, so injecting marker
-spans from the outside gets overwritten on the next reconciliation.
+Showing a `·` for **every space** (like Word) or a `↵` for soft line breaks
+looks easy but isn't robust on an **editable** Lexical surface:
 
-The only content-preserving way is a **node transform** that splits whitespace
-into `token`-mode text nodes (each rendered as its own `<span>`) so CSS can mark
-them:
+- An unformatted text run is a **single DOM text node** — there is no per-space
+  element to target with CSS, and Lexical owns the DOM, so marker spans injected
+  from the outside are wiped on the next reconciliation.
+- A `<br>` (LineBreakNode) **can't carry generated content** reliably across
+  browsers, so `br::after { content: '↵' }` is unreliable.
 
-```ts
-import { TextNode, $isTextNode } from 'lexical';
+The tempting fix — a node transform that splits each space into a `token` node
+tagged with an inline `style`/`format` so CSS can mark it — **breaks typing**:
+Lexical **inherits a text node's `format` and `style` onto newly typed text**, so
+the next characters you type after a marked space inherit the marker and render
+invisible. (We tried it; don't.)
 
-// Split leading/trailing/!inner spaces into token nodes tagged for CSS.
-editor.editor.registerNodeTransform(TextNode, (node) => {
-  if (!$marks.getState() || node.getMode() === 'token') return;
-  const text = node.getTextContent();
-  const i = text.indexOf(' ');
-  if (i === -1) return;
-  // isolate the space run and mark it
-  const space = i === 0 ? node : node.splitText(i)[1];
-  space.setMode('token').setStyle('--ws:1');
-});
-```
+The only correct route is a **dedicated node type** — a `TextNode` subclass whose
+`createDOM` adds a real `class` (not `format`/`style`, which would be inherited) —
+registered via a node replacement, plus a transform that converts whitespace into
+it and back. That's a fair amount of machinery and still has selection/clipboard
+edge cases, so it's out of scope here.
 
-```css
-.editor.marks-on [style*='--ws'] {
-  position: relative;
-  color: transparent;
-}
-.editor.marks-on [style*='--ws']::before {
-  content: '·';
-  position: absolute;
-  inset: 0;
-  color: var(--mark-color);
-  text-align: center;
-}
-```
-
-::: warning Trade-off
-Token-splitting every space changes the node structure and affects caret
-movement, selection and copy/paste. It's fine for a read-mostly view, but for a
-primary editing surface prefer the block-level `¶` marks above. Treat the
-transform as experimental.
-:::
+For a primary editing surface, prefer the block-level `¶` marks above — they're
+robust and match Word's model: **Enter** ends a paragraph (`¶`), **Shift+Enter**
+inserts a line break.
