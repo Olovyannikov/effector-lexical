@@ -64,6 +64,7 @@ export default defineConfig({
               { text: 'Selection & formatting', link: '/recipes/selection' },
               { text: 'Nodes & content', link: '/recipes/nodes' },
               { text: 'HTML & Markdown', link: '/recipes/serialization' },
+              { text: 'Collaboration (Yjs)', link: '/recipes/collaboration' },
               { text: 'Show formatting marks', link: '/recipes/marks' },
               { text: 'Scope, SSR & testing', link: '/recipes/scope' },
             ],
@@ -123,6 +124,10 @@ export default defineConfig({
               },
               { text: 'Узлы и контент', link: '/ru/recipes/nodes' },
               { text: 'HTML и Markdown', link: '/ru/recipes/serialization' },
+              {
+                text: 'Совместное редактирование',
+                link: '/ru/recipes/collaboration',
+              },
               { text: 'Показать символы', link: '/ru/recipes/marks' },
               { text: 'Scope, SSR и тесты', link: '/ru/recipes/scope' },
             ],

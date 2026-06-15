@@ -1,0 +1,55 @@
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+.hint {
+  color: #666;
+  font-size: 0.9rem;
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #bbb;
+}
+.dot.connected {
+  background: #2ecc71;
+}
+.dot.connecting {
+  background: #f1c40f;
+}
+.dot.disconnected {
+  background: #e74c3c;
+}
+.editor-shell {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.editor-input {
+  min-height: 160px;
+  padding: 1rem;
+  outline: none;
+}
+.editor-placeholder {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: #999;
+  pointer-events: none;
+}
+.footer {
+  color: #666;
+  font-size: 0.875rem;
+}

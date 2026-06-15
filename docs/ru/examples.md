@@ -141,3 +141,14 @@ export const $debug = createStore(false).on(toggleDebug, (on) => !on);
 
 Для отладки любой страницы есть официальное расширение браузера **Lexical
 DevTools** — оно инспектирует живые редакторы без кода.
+
+## Совместное редактирование
+
+[`react-collab`](https://github.com/Olovyannikov/effector-lexical/tree/main/examples/react-collab)
+— реал-тайм совместный редактор (`CollaborationPlugin` + Yjs), где статус
+подключения и число участников — это сторы effector. Откройте в двух вкладках,
+чтобы увидеть синхронизацию. См. [рецепт](./recipes/collaboration).
+
+```bash
+pnpm --filter @example/react-collab dev
+```

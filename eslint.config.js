@@ -30,7 +30,7 @@ export default tseslint.config(
   // Tests are excluded: they legitimately read state via getState and observe
   // through watch.
   {
-    files: ['src/**/*.{ts,tsx}', 'examples/react-basic/src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'examples/*/src/**/*.{ts,tsx}'],
     ignores: ['**/*.test.{ts,tsx}'],
     languageOptions: {
       parserOptions: {

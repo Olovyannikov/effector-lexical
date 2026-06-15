@@ -141,3 +141,14 @@ export const $debug = createStore(false).on(toggleDebug, (on) => !on);
 
 For ad-hoc debugging of any page, the official **Lexical DevTools** browser
 extension inspects live editors without any code.
+
+## Collaboration
+
+[`react-collab`](https://github.com/Olovyannikov/effector-lexical/tree/main/examples/react-collab)
+is a real-time collaborative editor (`CollaborationPlugin` + Yjs) with connection
+status and peer count as effector stores. Open it in two tabs to see live sync.
+See the [Collaboration recipe](./recipes/collaboration).
+
+```bash
+pnpm --filter @example/react-collab dev
+```
