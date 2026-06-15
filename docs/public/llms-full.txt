@@ -1,8 +1,10 @@
 # effector-lexical — full reference for LLMs
 
-Effector bindings for the Lexical editor. Two entry points:
+Effector bindings for the Lexical editor. Entry points:
 - `effector-lexical` — framework-agnostic core.
 - `effector-lexical/react` — React adapter (optional peers: react, @lexical/react).
+- `effector-lexical/html` — HTML serialization (optional peer: @lexical/html).
+- `effector-lexical/markdown` — Markdown serialization (optional peer: @lexical/markdown).
 
 Peer deps: effector >=23, lexical >=0.40 (required); react >=18, @lexical/react >=0.40 (optional).
 
@@ -39,6 +41,12 @@ The model OWNS the editor (calls `createEditor`) and OWNS every listener's lifec
 
 ### Critical implementation note
 Lexical treats a listener's return value as a teardown function (`listener(...args) || undefined`). Calling an effector event returns its payload, so all internal listener callbacks are wrapped to return `undefined`. If you write your own raw Lexical listener that calls an effector event, wrap it in a block: `editor.registerUpdateListener(() => { myEvent(); })` — NOT `=> myEvent()`.
+
+## Serialization (effector-lexical/html, effector-lexical/markdown)
+
+- `createHtmlApi(model)` → `{ exportHtmlFx: Effect<void,string>, importHtmlFx: Effect<string,void> }`. Export wraps `$generateHtmlFromNodes` inside `editor.read`; import parses HTML via DOMParser, `$generateNodesFromDOM`, clears root and `$insertNodes`.
+- `createMarkdownApi(model, transformers = TRANSFORMERS)` → `{ exportMarkdownFx, importMarkdownFx }` backed by `$convertToMarkdownString` / `$convertFromMarkdownString`.
+- Both are plain effects — wire with sample (e.g. `sample({ clock: loadFx.doneData, target: importHtmlFx })`). Import only creates nodes the editor registered.
 
 ## React API (effector-lexical/react)
 

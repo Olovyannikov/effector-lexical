@@ -10,6 +10,8 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         'react/index': resolve(__dirname, 'src/react/index.ts'),
+        'html/index': resolve(__dirname, 'src/html/index.ts'),
+        'markdown/index': resolve(__dirname, 'src/markdown/index.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) =>
