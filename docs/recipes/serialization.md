@@ -96,7 +96,78 @@ The same `transformers` drive shortcuts, `importMarkdownFx` and
 nodes the transformers need (`HeadingNode`, `ListNode`, `QuoteNode`, `CodeNode`,
 `LinkNode`, …).
 
-Pasting a whole Markdown document is different: the shortcut plugin only reacts
-to typing, and `$convertFromMarkdownString` replaces the **entire** document. For
-"paste markdown → convert" use the [Markdown source toggle](/playground)
-(`importMarkdownFx`) rather than an in-place paste.
+## Paste Markdown → convert at the caret
+
+The shortcut plugin only reacts to typing, and `$convertFromMarkdownString`
+replaces the **whole** document — so to convert _pasted_ Markdown in place,
+intercept `PASTE_COMMAND`, build the nodes in a throwaway editor, and insert them
+at the selection with `@lexical/clipboard`:
+
+```ts
+import {
+  $generateJSONFromSelectedNodes,
+  $generateNodesFromSerializedNodes,
+  $insertGeneratedNodes,
+} from '@lexical/clipboard';
+import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
+import {
+  createEditor,
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  PASTE_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+} from 'lexical';
+
+const toNodesJSON = (md: string) => {
+  const temp = createEditor({
+    nodes: NODES,
+    onError: (e) => {
+      throw e;
+    },
+  });
+  let nodes = [];
+  temp.update(
+    () => {
+      $convertFromMarkdownString(md, TRANSFORMERS);
+      const root = $getRoot();
+      nodes = $generateJSONFromSelectedNodes(
+        temp,
+        root.select(0, root.getChildrenSize()),
+      ).nodes;
+    },
+    { discrete: true },
+  );
+  return nodes;
+};
+
+editor.editor.registerCommand(
+  PASTE_COMMAND,
+  (event) => {
+    if (!(event instanceof ClipboardEvent)) return false;
+    const text = event.clipboardData?.getData('text/plain') ?? '';
+    if (!looksLikeMarkdown(text)) return false; // let plain paste run
+    event.preventDefault();
+    const serialized = toNodesJSON(text);
+    editor.editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+      $insertGeneratedNodes(
+        editor.editor,
+        $generateNodesFromSerializedNodes(serialized),
+        selection,
+      );
+    });
+    return true;
+  },
+  COMMAND_PRIORITY_HIGH,
+);
+```
+
+The throwaway editor must register the **same nodes** as the real one.
+`$generateJSONFromSelectedNodes` serializes nodes **with their children** (a bare
+`node.exportJSON()` does not), and `$insertGeneratedNodes` is what Lexical's own
+rich paste uses — so a single block merges into the current block and multiple
+blocks insert as siblings, just like native paste. Gate it behind a
+"looks like Markdown" check so ordinary text stays plain. Live in the
+[Playground](/playground).
