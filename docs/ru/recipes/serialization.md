@@ -76,3 +76,29 @@ sample({ clock: exportMarkdownFx.doneData, target: saveMarkdownFx });
 соответствующие ноды (`HeadingNode`, `ListNode`, `LinkNode`, …) в
 `createEditorModel({ nodes })`, а для Markdown — передайте трансформеры под них.
 :::
+
+## Live-шорткаты Markdown (набрал `# ` → заголовок)
+
+Чтобы форматировать Markdown **прямо при вводе** (`# ` → H1, `- ` → список,
+`**bold**`), используйте штатный `MarkdownShortcutPlugin` из Lexical внутри
+`<EditorProvider>` — это обычный Lexical-плагин, обвязка effector не нужна:
+
+```tsx
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import { TRANSFORMERS } from '@lexical/markdown';
+
+<EditorProvider model={editor}>
+  <RichTextPlugin /* … */ />
+  <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+</EditorProvider>;
+```
+
+Те же `transformers` питают шорткаты, `importMarkdownFx` и `exportMarkdownFx` —
+держите один список, чтобы все трое были согласованы. Зарегистрируйте ноды, что
+нужны трансформерам (`HeadingNode`, `ListNode`, `QuoteNode`, `CodeNode`,
+`LinkNode`, …).
+
+Вставка целого Markdown-документа — другое: плагин шорткатов реагирует только на
+ввод, а `$convertFromMarkdownString` заменяет **весь** документ. Для «вставил
+markdown → сконвертировалось» используйте [тоггл Markdown-исходника](/playground)
+(`importMarkdownFx`), а не вставку по месту.

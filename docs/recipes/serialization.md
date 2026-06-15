@@ -74,3 +74,29 @@ Import only produces nodes your editor knows about. Register the matching nodes
 (`HeadingNode`, `ListNode`, `LinkNode`, …) in `createEditorModel({ nodes })` and,
 for Markdown, pass transformers that cover them.
 :::
+
+## Live Markdown shortcuts (type `# ` → heading)
+
+To format Markdown **as you type** (`# ` → H1, `- ` → list, `**bold**`), use
+Lexical's own `MarkdownShortcutPlugin` inside `<EditorProvider>` — it's a plain
+Lexical plugin, no effector wiring needed:
+
+```tsx
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import { TRANSFORMERS } from '@lexical/markdown';
+
+<EditorProvider model={editor}>
+  <RichTextPlugin /* … */ />
+  <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+</EditorProvider>;
+```
+
+The same `transformers` drive shortcuts, `importMarkdownFx` and
+`exportMarkdownFx` — keep one list so all three stay consistent. Register the
+nodes the transformers need (`HeadingNode`, `ListNode`, `QuoteNode`, `CodeNode`,
+`LinkNode`, …).
+
+Pasting a whole Markdown document is different: the shortcut plugin only reacts
+to typing, and `$convertFromMarkdownString` replaces the **entire** document. For
+"paste markdown → convert" use the [Markdown source toggle](/playground)
+(`importMarkdownFx`) rather than an in-place paste.

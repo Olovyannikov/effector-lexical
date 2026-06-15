@@ -11,7 +11,9 @@ effector:
 - the footer counters read the `$text` store;
 - the **MD** button switches to a Markdown source view — `exportMarkdownFx`
   dumps the content on the way in, `importMarkdownFx` applies your edits on the
-  way back (see [HTML & Markdown](./recipes/serialization)).
+  way back (see [HTML & Markdown](./recipes/serialization));
+- **live Markdown shortcuts** — type `# `, `- `, `> `, ` ``` ` or `**bold**`
+  and it formats as you type (Lexical's `MarkdownShortcutPlugin`).
 
 <LexicalPlayground />
 

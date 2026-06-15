@@ -11,7 +11,10 @@
 - счётчики в футере читают стор `$text`;
 - кнопка **MD** переключает на исходник в Markdown — `exportMarkdownFx`
   выгружает контент при входе, `importMarkdownFx` применяет правки при возврате
-  (см. [HTML и Markdown](./recipes/serialization)).
+  (см. [HTML и Markdown](./recipes/serialization));
+- **live-шорткаты Markdown** — наберите `# `, `- `, `> `, ` ``` ` или
+  `**bold**`, и форматирование применится прямо при вводе (плагин Lexical
+  `MarkdownShortcutPlugin`).
 
 <LexicalPlayground />
 

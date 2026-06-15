@@ -6,7 +6,9 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { TRANSFORMERS } from '@lexical/markdown';
 import {
   HeadingNode,
   QuoteNode,
@@ -444,6 +446,7 @@ export function PlaygroundDemo() {
             <HistoryPlugin />
             <ListPlugin />
             <LinkPlugin />
+            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
             <FormattingMarksPlugin />
           </div>
         )}
