@@ -105,25 +105,34 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 
-/* Show formatting marks: ¶ at block ends. The class lives on the root element
-   (the ContentEditable), toggled by the effector-driven FormattingMarksPlugin. */
-.lexical-playground .pg-input.pg-marks p::after,
-.lexical-playground .pg-input.pg-marks h1::after,
-.lexical-playground .pg-input.pg-marks h2::after,
-.lexical-playground .pg-input.pg-marks blockquote::after,
-.lexical-playground .pg-input.pg-marks li::after {
+/* Show formatting marks. The class lives on the root element (the
+   ContentEditable), toggled by the effector-driven FormattingMarksPlugin. */
+/* Non-empty blocks: ¶ inline at the end of the content. */
+.lexical-playground
+  .pg-input.pg-marks
+  :where(p, h1, h2, blockquote, li):not(:has(> br:only-child))::after {
   content: '¶';
   color: var(--vp-c-brand-1);
   opacity: 0.5;
   padding-left: 2px;
 }
-/* Empty blocks render a lone <br>; hide it so ¶ stays on the same line
-   instead of dropping to the next one. */
+/* Empty blocks render a lone <br> we can't hide (browsers ignore display:none
+   on <br>), so overlay ¶ on that line with an absolute pseudo instead of
+   adding a new line below it. */
 .lexical-playground
   .pg-input.pg-marks
-  :where(p, h1, h2, blockquote, li)
-  > br:only-child {
-  display: none;
+  :where(p, h1, h2, blockquote, li):has(> br:only-child) {
+  position: relative;
+}
+.lexical-playground
+  .pg-input.pg-marks
+  :where(p, h1, h2, blockquote, li):has(> br:only-child)::after {
+  content: '¶';
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--vp-c-brand-1);
+  opacity: 0.5;
 }
 /* WhitespaceNode → · over each space (real space kept for copy/paste). */
 .lexical-playground .pg-input.pg-marks .ws-mark {
