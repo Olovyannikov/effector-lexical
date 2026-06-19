@@ -1,6 +1,6 @@
 {
   "name": "effector-lexical",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Effector bindings for the Lexical text editor",
   "type": "module",
   "license": "MIT",
